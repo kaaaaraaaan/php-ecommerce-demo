@@ -57,7 +57,7 @@ CREATE TABLE order_items (
 
 -- Insert default admin user (password: admin123)
 INSERT INTO users (username, email, password, is_admin) VALUES 
-('admin', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', TRUE);
+('admin', 'admin@example.com', 'admin123', TRUE);
 
 -- Insert sample products
 INSERT INTO products (name, description, price, image_url, stock_quantity) VALUES 

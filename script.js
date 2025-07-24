@@ -94,85 +94,9 @@ function createProductCard(product) {
     return card;
 }
 
-// Authentication functions
-function openLogin() {
-    document.getElementById('loginModal').style.display = 'block';
-}
+// Authentication functions - now handled by dedicated pages
 
-function closeLogin() {
-    document.getElementById('loginModal').style.display = 'none';
-    document.getElementById('loginForm').reset();
-}
 
-function openRegister() {
-    document.getElementById('registerModal').style.display = 'block';
-}
-
-function closeRegister() {
-    document.getElementById('registerModal').style.display = 'none';
-    document.getElementById('registerForm').reset();
-}
-
-// Login form submission
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const loginData = Object.fromEntries(formData);
-    
-    try {
-        const response = await fetch('api.php?action=login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(loginData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            currentUser = result.user;
-            showUserSection();
-            closeLogin();
-            showAlert('Login successful!', 'success');
-            await loadCart();
-        } else {
-            showAlert(result.error || 'Login failed', 'error');
-        }
-    } catch (error) {
-        showAlert('Error during login', 'error');
-    }
-});
-
-// Register form submission
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const registerData = Object.fromEntries(formData);
-    
-    try {
-        const response = await fetch('api.php?action=register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(registerData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            closeRegister();
-            showAlert('Registration successful! Please login.', 'success');
-        } else {
-            showAlert(result.error || 'Registration failed', 'error');
-        }
-    } catch (error) {
-        showAlert('Error during registration', 'error');
-    }
-});
 
 // Logout function
 async function logout() {
