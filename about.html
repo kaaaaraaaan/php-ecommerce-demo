@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - ProTechMate</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .about-section {
+            padding: 3rem 0;
+        }
+        
+        .about-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 2rem;
+        }
+        
+        .about-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .about-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .about-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .about-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .about-card i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .about-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .about-card p {
+            color: #333;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        
+        .team-section {
+            margin-top: 4rem;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .team-member {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .team-member:hover {
+            transform: translateY(-5px);
+        }
+        
+        .team-member img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .placeholder-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .team-member h3 {
+            color: #000;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .team-member p {
+            color: #333;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .team-member .social {
+            margin-top: 1rem;
+        }
+        
+        .team-member .social a {
+            color: #444;
+            margin: 0 0.5rem;
+            transition: color 0.3s;
+        }
+        
+        .team-member .social a:hover {
+            color: #000;
+        }
+        
+        @media (max-width: 768px) {
+            .about-grid, .team-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="index.html" class="logo">ProTechMate</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link active">About Us</a>
+                <div id="userSection" class="hidden">
+                    <span id="welcomeText"></span>
+                    <div class="cart-icon" onclick="openCart()">
+                        🛒 <span id="cartCount" class="cart-count hidden">0</span>
+                    </div>
+                    <button class="btn" onclick="logout()">Logout</button>
+                </div>
+                <div id="guestSection">
+                    <a href="login.html" class="btn">Login</a>
+                    <a href="register.html" class="btn">Register</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="alert alert-success" id="successAlert"></div>
+        <div class="alert alert-error" id="errorAlert"></div>
+
+        <section class="about-section">
+            <div class="about-container">
+                <div class="about-header">
+                    <h1>About ProTechMate</h1>
+                    <p>Your trusted partner in premium technology solutions since 2020</p>
+                </div>
+                
+                <p>ProTechMate is a leading online retailer specializing in high-quality electronics, gadgets, and tech accessories. Founded with a passion for technology and a commitment to exceptional customer service, we've quickly grown to become a trusted destination for tech enthusiasts and everyday consumers alike.</p>
+                
+                <p>Our mission is to make cutting-edge technology accessible to everyone through competitive pricing, expert guidance, and a seamless shopping experience. We carefully curate our product selection to offer only the best devices from trusted brands and emerging innovators.</p>
+                
+                <div class="about-grid">
+                    <div class="about-card">
+                        <i class="fas fa-medal"></i>
+                        <h3>Premium Quality</h3>
+                        <p>We partner with trusted brands and manufacturers to ensure every product meets our rigorous quality standards. All items come with full warranties and our satisfaction guarantee.</p>
+                    </div>
+                    
+                    <div class="about-card">
+                        <i class="fas fa-truck"></i>
+                        <h3>Fast Delivery</h3>
+                        <p>With our efficient logistics network, we ensure your orders are processed quickly and delivered safely to your doorstep, with real-time tracking available.</p>
+                    </div>
+                    
+                    <div class="about-card">
+                        <i class="fas fa-headset"></i>
+                        <h3>Expert Support</h3>
+                        <p>Our knowledgeable support team is always ready to assist with product recommendations, technical questions, or any concerns about your order.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="about-container team-section">
+                <div class="about-header">
+                    <h1>Our Leadership Team</h1>
+                    <p>Meet the experts behind ProTechMate</p>
+                </div>
+                
+                <div class="team-grid">
+                    <div class="team-member">
+                        <div class="placeholder-image">PB</div>
+                        <h3>Prabin Bashyal</h3>
+                        <p>Founder & CEO</p>
+                        <p>probben.99@gmail.com</p>
+                        <p>0466 058 100</p>
+                        <div class="social">
+                            <a href="mailto:probben.99@gmail.com"><i class="fas fa-envelope"></i></a>
+                            <a href="tel:0466058100"><i class="fas fa-phone"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div class="team-member">
+                        <div class="placeholder-image">SD</div>
+                        <h3>Sunil Dahal</h3>
+                        <p>Chief Technology Officer</p>
+                        <p>dahalsunil000@gmail.com</p>
+                        <p>0481 723 594</p>
+                        <div class="social">
+                            <a href="mailto:dahalsunil000@gmail.com"><i class="fas fa-envelope"></i></a>
+                            <a href="tel:0481723594"><i class="fas fa-phone"></i></a>
+                        </div>
+                    </div>
+                    
+                    <div class="team-member">
+                        <div class="placeholder-image">SM</div>
+                        <h3>Sonish Malakar</h3>
+                        <p>Operations Director</p>
+                        <p>CIHE240801@student.cihe.edu.au</p>
+                        <p>+61 452 635 328</p>
+                        <div class="social">
+                            <a href="mailto:CIHE240801@student.cihe.edu.au"><i class="fas fa-envelope"></i></a>
+                            <a href="tel:+61452635328"><i class="fas fa-phone"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>
+            <div class="footer-grid">
+                <div>
+                    <h3>ProTechMate</h3>
+                    <p>Your premium destination for cutting-edge electronics and technology.</p>
+                </div>
+                <div>
+                    <h4>Quick Links</h4>
+                    <div class="quick-links">
+                        <a href="about.html">About Us</a>
+                        <a href="#">Contact</a>
+                    </div>
+                </div>
+                <div>
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ProTechMate. All rights reserved. | Built with ❤️ for technology enthusiasts</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
