@@ -59,6 +59,17 @@ CREATE TABLE order_items (
 INSERT INTO users (username, email, password, is_admin) VALUES 
 ('admin', 'admin@example.com', 'admin123', TRUE);
 
+-- Contacts table
+CREATE TABLE contacts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('new', 'read', 'replied', 'archived') DEFAULT 'new'
+);
+
 -- Insert sample products
 INSERT INTO products (name, description, price, image_url, stock_quantity) VALUES 
 ('Laptop', 'High-performance laptop for work and gaming', 999.99, 'https://via.placeholder.com/300x200?text=Laptop', 10),

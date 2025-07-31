@@ -152,6 +152,9 @@ function getAllProducts() {
             <button class="tab-btn" onclick="switchTab('users')">
                 <i class="fas fa-users"></i> User Management
             </button>
+            <button class="tab-btn" onclick="switchTab('contacts')">
+                <i class="fas fa-envelope"></i> Contact Messages
+            </button>
         </div>
 
         <!-- Products Tab -->
@@ -272,6 +275,61 @@ function getAllProducts() {
                 </div>
             </div>
         </div>
+
+        <!-- Contacts Tab -->
+        <div class="tab-content" id="contacts-tab" style="display: none;">
+            <div class="card">
+                <h2><i class="fas fa-envelope"></i> Contact Messages</h2>
+                <div class="contacts-section">
+                    <div class="contacts-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalContacts">0</div>
+                            <div class="stat-label">Total Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="newContacts">0</div>
+                            <div class="stat-label">New Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="repliedContacts">0</div>
+                            <div class="stat-label">Replied Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="archivedContacts">0</div>
+                            <div class="stat-label">Archived Messages</div>
+                        </div>
+                    </div>
+                    <div class="contacts-filter">
+                        <select id="contactStatusFilter" onchange="loadContacts(this.value)">
+                            <option value="">All Messages</option>
+                            <option value="new">New Messages</option>
+                            <option value="read">Read Messages</option>
+                            <option value="replied">Replied Messages</option>
+                            <option value="archived">Archived Messages</option>
+                        </select>
+                    </div>
+                    <div class="contacts-table-container">
+                        <table class="contacts-table" id="contactsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Subject</th>
+                                    <th>Message</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contactsTableBody">
+                                <!-- Contact messages will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Edit Product Modal -->
@@ -334,6 +392,8 @@ function getAllProducts() {
                 loadOrders();
             } else if (tabName === 'users') {
                 loadUsers();
+            } else if (tabName === 'contacts') {
+                loadContacts();
             }
         }
 
@@ -680,6 +740,112 @@ function getAllProducts() {
             document.getElementById('totalUsers').textContent = totalUsers;
             document.getElementById('adminUsers').textContent = adminUsers;
             document.getElementById('activeUsers').textContent = activeUsers;
+        }
+        
+        // Contact Management Functions
+        function loadContacts(status = '') {
+            showLoading();
+            const url = status ? `api.php?action=contact&status=${status}` : 'api.php?action=contact';
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayContacts(data.contacts);
+                        updateContactStats(data.stats);
+                        hideLoading();
+                    } else {
+                        showError(data.message || 'Failed to load contacts');
+                        hideLoading();
+                    }
+                })
+                .catch(error => {
+                    showError('Error loading contacts: ' + error.message);
+                    hideLoading();
+                });
+        }
+        
+        function displayContacts(contacts) {
+            const tbody = document.getElementById('contactsTableBody');
+            tbody.innerHTML = '';
+            
+            if (contacts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #666;">No contact messages found</td></tr>';
+                return;
+            }
+            
+            contacts.forEach(contact => {
+                const row = document.createElement('tr');
+                const date = new Date(contact.created_at).toLocaleString();
+                const statusClass = getStatusClass(contact.status);
+                
+                // Truncate message for display
+                const truncatedMessage = contact.message.length > 100 
+                    ? contact.message.substring(0, 100) + '...' 
+                    : contact.message;
+                
+                row.innerHTML = `
+                    <td><strong>#${contact.id}</strong></td>
+                    <td>${contact.name}</td>
+                    <td><a href="mailto:${contact.email}">${contact.email}</a></td>
+                    <td>${contact.subject}</td>
+                    <td title="${contact.message}">${truncatedMessage}</td>
+                    <td>${date}</td>
+                    <td><span class="status-badge ${statusClass}">${contact.status}</span></td>
+                    <td>
+                        <select class="status-select" onchange="updateContactStatus(${contact.id}, this.value)">
+                            <option value="new" ${contact.status === 'new' ? 'selected' : ''}>New</option>
+                            <option value="read" ${contact.status === 'read' ? 'selected' : ''}>Read</option>
+                            <option value="replied" ${contact.status === 'replied' ? 'selected' : ''}>Replied</option>
+                            <option value="archived" ${contact.status === 'archived' ? 'selected' : ''}>Archived</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateContactStats(stats) {
+            document.getElementById('totalContacts').textContent = stats.total || 0;
+            document.getElementById('newContacts').textContent = stats.new || 0;
+            document.getElementById('repliedContacts').textContent = stats.replied || 0;
+            document.getElementById('archivedContacts').textContent = stats.archived || 0;
+        }
+        
+        function getStatusClass(status) {
+            switch(status) {
+                case 'new': return 'status-new';
+                case 'read': return 'status-read';
+                case 'replied': return 'status-replied';
+                case 'archived': return 'status-archived';
+                default: return '';
+            }
+        }
+        
+        function updateContactStatus(contactId, status) {
+            showLoading();
+            
+            fetch('api.php?action=contact', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `contact_id=${contactId}&status=${status}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess(data.message || 'Contact status updated');
+                    loadContacts(document.getElementById('contactStatusFilter').value);
+                } else {
+                    showError(data.message || 'Failed to update contact status');
+                    hideLoading();
+                }
+            })
+            .catch(error => {
+                showError('Error updating contact status: ' + error.message);
+                hideLoading();
+            });
         }
 
         async function updateUserRole(userId, isAdmin) {

@@ -49,6 +49,16 @@ switch ($request) {
             checkout();
         }
         break;
+        
+    case 'contact':
+        if ($method === 'POST') {
+            submitContact();
+        } elseif ($method === 'GET') {
+            getContacts();
+        } elseif ($method === 'PUT') {
+            updateContactStatus();
+        }
+        break;
     
     case 'user':
         if ($method === 'GET') {
@@ -476,4 +486,140 @@ function updateUserRole() {
         echo json_encode(['error' => 'Failed to update user role']);
     }
 }
+
+
+
+// Submit a new contact form message
+function submitContact() {
+    global $conn;
+    
+    // Validate required fields
+    if (!isset($_POST['name']) || !isset($_POST['email']) || !isset($_POST['subject']) || !isset($_POST['message'])) {
+        echo json_encode(['success' => false, 'message' => 'All fields are required']);
+        return;
+    }
+    
+    // Sanitize inputs
+    $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING);
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+    $subject = filter_var($_POST['subject'], FILTER_SANITIZE_STRING);
+    $message = filter_var($_POST['message'], FILTER_SANITIZE_STRING);
+    
+    // Validate email
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid email address']);
+        return;
+    }
+    
+    // Insert contact message into database
+    $stmt = $conn->prepare("INSERT INTO contacts (name, email, subject, message) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssss", $name, $email, $subject, $message);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Your message has been sent successfully']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to send message: ' . $conn->error]);
+    }
+    
+    $stmt->close();
+}
+
+// Get all contact form submissions (admin only)
+function getContacts() {
+    global $conn;
+    
+    // Check if user is admin
+    $currentUser = getCurrentUser();
+    if (!$currentUser || $currentUser['is_admin'] != 1) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+        return;
+    }
+    
+    // Get contacts with optional status filter
+    $status = isset($_GET['status']) ? $_GET['status'] : null;
+    
+    if ($status) {
+        $stmt = $conn->prepare("SELECT * FROM contacts WHERE status = ? ORDER BY created_at DESC");
+        $stmt->bind_param("s", $status);
+    } else {
+        $stmt = $conn->prepare("SELECT * FROM contacts ORDER BY created_at DESC");
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $contacts = [];
+    
+    while ($row = $result->fetch_assoc()) {
+        $contacts[] = $row;
+    }
+    
+    // Get contact statistics
+    $stats = [
+        'total' => 0,
+        'new' => 0,
+        'read' => 0,
+        'replied' => 0,
+        'archived' => 0
+    ];
+    
+    $statsStmt = $conn->query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status");
+    while ($row = $statsStmt->fetch_assoc()) {
+        $stats[$row['status']] = (int)$row['count'];
+    }
+    
+    $totalStmt = $conn->query("SELECT COUNT(*) as total FROM contacts");
+    $totalRow = $totalStmt->fetch_assoc();
+    $stats['total'] = (int)$totalRow['total'];
+    
+    echo json_encode([
+        'success' => true, 
+        'contacts' => $contacts,
+        'stats' => $stats
+    ]);
+    
+    $stmt->close();
+}
+
+// Update contact status (admin only)
+function updateContactStatus() {
+    global $conn;
+    
+    // Check if user is admin
+    $currentUser = getCurrentUser();
+    if (!$currentUser || $currentUser['is_admin'] != 1) {
+        echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+        return;
+    }
+    
+    // Parse the PUT request data
+    parse_str(file_get_contents("php://input"), $putData);
+    
+    if (!isset($putData['contact_id']) || !isset($putData['status'])) {
+        echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+        return;
+    }
+    
+    $contactId = $putData['contact_id'];
+    $status = $putData['status'];
+    
+    // Validate status
+    $validStatuses = ['new', 'read', 'replied', 'archived'];
+    if (!in_array($status, $validStatuses)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid status']);
+        return;
+    }
+    
+    // Update contact status
+    $stmt = $conn->prepare("UPDATE contacts SET status = ? WHERE id = ?");
+    $stmt->bind_param("si", $status, $contactId);
+    
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Contact status updated successfully']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to update contact status: ' . $conn->error]);
+    }
+    
+    $stmt->close();
+}
+
 ?>
