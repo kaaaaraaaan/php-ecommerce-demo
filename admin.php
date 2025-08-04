@@ -34,28 +34,57 @@ if (!isLoggedIn() || !isAdmin()) {
 
 function addProduct() {
     global $pdo;
-    $data = json_decode(file_get_contents('php://input'), true);
     
-    if (!isset($data['name']) || !isset($data['price'])) {
+    // Check if form data was submitted
+    if (isset($_POST['name']) && isset($_POST['price'])) {
+        // Handle file upload
+        $targetDir = "uploads/products/";
+        $imageUrl = "";
+        
+        // Create directory if it doesn't exist
+        if (!file_exists($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+        
+        if (isset($_FILES["product_image"]) && $_FILES["product_image"]["error"] == 0) {
+            $fileName = basename($_FILES["product_image"]["name"]);
+            $targetFilePath = $targetDir . time() . "_" . $fileName; // Add timestamp to avoid duplicate filenames
+            $fileType = pathinfo($targetFilePath, PATHINFO_EXTENSION);
+            
+            // Allow certain file formats
+            $allowTypes = array('jpg', 'jpeg', 'png', 'gif', 'webp');
+            if (in_array(strtolower($fileType), $allowTypes)) {
+                // Upload file to server
+                if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $targetFilePath)) {
+                    $imageUrl = $targetFilePath;
+                } else {
+                    echo json_encode(['error' => 'Sorry, there was an error uploading your file.']);
+                    return;
+                }
+            } else {
+                echo json_encode(['error' => 'Sorry, only JPG, JPEG, PNG, GIF, & WEBP files are allowed.']);
+                return;
+            }
+        }
+        
+        try {
+            $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image_url, stock_quantity) VALUES (?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $_POST['name'],
+                $_POST['description'] ?? '',
+                $_POST['price'],
+                $imageUrl,
+                $_POST['stock_quantity'] ?? 0
+            ]);
+            
+            echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to add product: ' . $e->getMessage()]);
+        }
+    } else {
         http_response_code(400);
         echo json_encode(['error' => 'Name and price required']);
-        return;
-    }
-    
-    try {
-        $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image_url, stock_quantity) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([
-            $data['name'],
-            $data['description'] ?? '',
-            $data['price'],
-            $data['image_url'] ?? '',
-            $data['stock_quantity'] ?? 0
-        ]);
-        
-        echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to add product']);
     }
 }
 
@@ -82,29 +111,58 @@ function deleteProduct() {
 
 function updateProduct() {
     global $pdo;
-    $data = json_decode(file_get_contents('php://input'), true);
     
-    if (!isset($data['id'])) {
+    // Check if form data was submitted
+    if (isset($_POST['id'])) {
+        // Handle file upload
+        $targetDir = "uploads/products/";
+        $imageUrl = $_POST['current_image_url'] ?? '';
+        
+        // Create directory if it doesn't exist
+        if (!file_exists($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+        
+        if (isset($_FILES["product_image"]) && $_FILES["product_image"]["error"] == 0) {
+            $fileName = basename($_FILES["product_image"]["name"]);
+            $targetFilePath = $targetDir . time() . "_" . $fileName; // Add timestamp to avoid duplicate filenames
+            $fileType = pathinfo($targetFilePath, PATHINFO_EXTENSION);
+            
+            // Allow certain file formats
+            $allowTypes = array('jpg', 'jpeg', 'png', 'gif', 'webp');
+            if (in_array(strtolower($fileType), $allowTypes)) {
+                // Upload file to server
+                if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $targetFilePath)) {
+                    $imageUrl = $targetFilePath;
+                } else {
+                    echo json_encode(['error' => 'Sorry, there was an error uploading your file.']);
+                    return;
+                }
+            } else {
+                echo json_encode(['error' => 'Sorry, only JPG, JPEG, PNG, GIF, & WEBP files are allowed.']);
+                return;
+            }
+        }
+        
+        try {
+            $stmt = $pdo->prepare("UPDATE products SET name = ?, description = ?, price = ?, image_url = ?, stock_quantity = ? WHERE id = ?");
+            $stmt->execute([
+                $_POST['name'],
+                $_POST['description'],
+                $_POST['price'],
+                $imageUrl,
+                $_POST['stock_quantity'],
+                $_POST['id']
+            ]);
+            
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to update product: ' . $e->getMessage()]);
+        }
+    } else {
         http_response_code(400);
         echo json_encode(['error' => 'Product ID required']);
-        return;
-    }
-    
-    try {
-        $stmt = $pdo->prepare("UPDATE products SET name = ?, description = ?, price = ?, image_url = ?, stock_quantity = ? WHERE id = ?");
-        $stmt->execute([
-            $data['name'],
-            $data['description'],
-            $data['price'],
-            $data['image_url'],
-            $data['stock_quantity'],
-            $data['id']
-        ]);
-        
-        echo json_encode(['success' => true]);
-    } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to update product']);
     }
 }
 
@@ -130,6 +188,59 @@ function getAllProducts() {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin.css">
+    <style>
+        .image-preview {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .image-preview img:hover {
+            transform: scale(1.02);
+        }
+        
+        .image-preview p {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin: 5px 0 0;
+        }
+        
+        input[type="file"] {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        input[type="file"]::-webkit-file-upload-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            padding: 8px 16px;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="file"]::-webkit-file-upload-button:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            transform: translateY(-1px);
+        }
+    </style>
 </head>
 <body>
     <div class="header">
@@ -161,7 +272,7 @@ function getAllProducts() {
         <div class="tab-content" id="products-tab">
             <div class="card">
                 <h2><i class="fas fa-plus-circle"></i> Add New Product</h2>
-            <form id="productForm">
+            <form id="productForm" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="name">Product Name</label>
                     <input type="text" id="name" name="name" required>
@@ -175,8 +286,12 @@ function getAllProducts() {
                     <input type="number" id="price" name="price" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label for="image_url">Image URL</label>
-                    <input type="url" id="image_url" name="image_url">
+                    <label for="product_image">Product Image</label>
+                    <input type="file" id="product_image" name="product_image" accept="image/*">
+                    <div class="image-preview" id="imagePreview">
+                        <img src="https://via.placeholder.com/300x200?text=No+Image" alt="Image Preview" id="previewImg">
+                        <p>Select an image to preview</p>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="stock_quantity">Stock Quantity</label>
@@ -337,8 +452,9 @@ function getAllProducts() {
         <div class="modal-content">
             <span class="close" onclick="closeEditModal()">&times;</span>
             <h2>Edit Product</h2>
-            <form id="editProductForm">
+            <form id="editProductForm" enctype="multipart/form-data" method="post">
                 <input type="hidden" id="editId" name="id">
+                <input type="hidden" id="currentImageUrl" name="current_image_url">
                 <div class="form-group">
                     <label for="editName">Product Name</label>
                     <input type="text" id="editName" name="name" required>
@@ -352,14 +468,20 @@ function getAllProducts() {
                     <input type="number" id="editPrice" name="price" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label for="editImageUrl">Image URL</label>
-                    <input type="url" id="editImageUrl" name="image_url">
+                    <label for="editProductImage">Product Image</label>
+                    <input type="file" id="editProductImage" name="product_image" accept="image/*">
+                    <div class="image-preview" id="editImagePreview">
+                        <img src="https://via.placeholder.com/300x200?text=No+Image" alt="Image Preview" id="editPreviewImg">
+                        <p>Current image or select new to replace</p>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="editStockQuantity">Stock Quantity</label>
                     <input type="number" id="editStockQuantity" name="stock_quantity" min="0">
                 </div>
-                <button type="submit" class="btn">Update Product</button>
+                <div class="form-group">
+                    <button type="submit" class="btn" id="updateProductBtn">Update Product</button>
+                </div>
             </form>
         </div>
     </div>
@@ -407,15 +529,11 @@ function getAllProducts() {
             e.preventDefault();
             
             const formData = new FormData(e.target);
-            const productData = Object.fromEntries(formData);
             
             try {
                 const response = await fetch('admin.php?action=add_product', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(productData)
+                    body: formData
                 });
                 
                 const result = await response.json();
@@ -423,6 +541,7 @@ function getAllProducts() {
                 if (result.success) {
                     showAlert('Product added successfully!', 'success');
                     e.target.reset();
+                    document.getElementById('previewImg').src = 'https://via.placeholder.com/300x200?text=No+Image';
                     loadProducts();
                 } else {
                     showAlert(result.error || 'Failed to add product', 'error');
@@ -431,34 +550,85 @@ function getAllProducts() {
                 showAlert('Error adding product', 'error');
             }
         });
-
-        // Edit product form submission
-        document.getElementById('editProductForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        
+        // Image preview functionality for add product
+        document.getElementById('product_image').addEventListener('change', function() {
+            const file = this.files[0];
+            const previewImg = document.getElementById('previewImg');
+            const previewText = previewImg.nextElementSibling;
             
-            const formData = new FormData(e.target);
-            const productData = Object.fromEntries(formData);
-            
-            try {
-                const response = await fetch('admin.php?action=update_product', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(productData)
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.addEventListener('load', function() {
+                    previewImg.src = this.result;
+                    previewText.style.display = 'none';
                 });
                 
-                const result = await response.json();
-                
+                reader.readAsDataURL(file);
+            } else {
+                previewImg.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                previewText.style.display = 'block';
+            }
+        });
+
+        // Edit product form submission
+        document.getElementById('updateProductBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const form = document.getElementById('editProductForm');
+            const formData = new FormData(form);
+            
+            // Disable button and show loading state
+            this.disabled = true;
+            this.innerHTML = 'Updating...';
+            
+            fetch('admin.php?action=update_product', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
                 if (result.success) {
                     showAlert('Product updated successfully!', 'success');
                     closeEditModal();
                     loadProducts();
                 } else {
                     showAlert(result.error || 'Failed to update product', 'error');
+                    // Re-enable button
+                    this.disabled = false;
+                    this.innerHTML = 'Update Product';
                 }
-            } catch (error) {
-                showAlert('Error updating product', 'error');
+            })
+            .catch(error => {
+                showAlert('Error updating product: ' + error.message, 'error');
+                // Re-enable button
+                this.disabled = false;
+                this.innerHTML = 'Update Product';
+            });
+        });
+        
+        // Also add the form submission handler as a backup
+        document.getElementById('editProductForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('updateProductBtn').click();
+        });
+        
+        // Image preview functionality for edit product
+        document.getElementById('editProductImage').addEventListener('change', function() {
+            const file = this.files[0];
+            const previewImg = document.getElementById('editPreviewImg');
+            const previewText = previewImg.nextElementSibling;
+            
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.addEventListener('load', function() {
+                    previewImg.src = this.result;
+                    previewText.style.display = 'none';
+                });
+                
+                reader.readAsDataURL(file);
             }
         });
 
@@ -506,12 +676,25 @@ function getAllProducts() {
                 .then(products => {
                     const product = products.find(p => p.id == id);
                     if (product) {
+                        // Reset the form first to clear any previous data
+                        document.getElementById('editProductForm').reset();
+                        
                         document.getElementById('editId').value = product.id;
                         document.getElementById('editName').value = product.name;
                         document.getElementById('editDescription').value = product.description;
                         document.getElementById('editPrice').value = product.price;
-                        document.getElementById('editImageUrl').value = product.image_url;
+                        document.getElementById('currentImageUrl').value = product.image_url;
                         document.getElementById('editStockQuantity').value = product.stock_quantity;
+                        
+                        // Set the preview image
+                        const previewImg = document.getElementById('editPreviewImg');
+                        if (product.image_url) {
+                            previewImg.src = product.image_url;
+                            previewImg.nextElementSibling.style.display = 'none';
+                        } else {
+                            previewImg.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                            previewImg.nextElementSibling.style.display = 'block';
+                        }
                         
                         document.getElementById('editModal').style.display = 'block';
                     }
@@ -520,6 +703,14 @@ function getAllProducts() {
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
+            // Reset the form when closing the modal
+            document.getElementById('editProductForm').reset();
+            // Reset the submit button state
+            const submitBtn = document.querySelector('#editProductForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Update Product';
+            }
         }
 
         async function deleteProduct(id) {

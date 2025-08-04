@@ -72,7 +72,10 @@ CREATE TABLE contacts (
 
 -- Insert sample products
 INSERT INTO products (name, description, price, image_url, stock_quantity) VALUES 
-('Laptop', 'High-performance laptop for work and gaming', 999.99, 'https://via.placeholder.com/300x200?text=Laptop', 10),
-('Smartphone', 'Latest smartphone with advanced features', 699.99, 'https://via.placeholder.com/300x200?text=Smartphone', 25),
-('Headphones', 'Wireless noise-canceling headphones', 199.99, 'https://via.placeholder.com/300x200?text=Headphones', 50),
-('Tablet', 'Portable tablet for entertainment and productivity', 399.99, 'https://via.placeholder.com/300x200?text=Tablet', 15);
+('MacBook Pro M3', 'Apple MacBook Pro with M3 chip, 16GB RAM, 512GB SSD, 14-inch Liquid Retina XDR display, Space Gray', 1999.99, 'uploads/products/MacBook Pro M3.png', 15),
+('Samsung Galaxy S24 Ultra', 'Samsung Galaxy S24 Ultra with 6.8" Dynamic AMOLED display, 200MP camera, Snapdragon 8 Gen 3, 12GB RAM, 256GB storage, Titanium Black', 1299.99, 'uploads/products/Samsung Galaxy S24 Ultra.png', 30),
+('Sony WH-1000XM5', 'Sony WH-1000XM5 Wireless Noise Cancelling Headphones with Auto Noise Cancelling Optimizer, Crystal Clear Hands-Free Calling, and Alexa Voice Control, Black', 349.99, 'uploads/products/Sony WH-1000XM5.png', 45),
+('iPad Pro M2', 'Apple iPad Pro 12.9-inch with M2 chip, Liquid Retina XDR display, 256GB, Wi-Fi 6E, Silver, 2022 model', 1099.99, 'uploads/products/iPad Pro M2.png', 20),
+('ASUS ROG Strix G17', 'ASUS ROG Strix G17 Gaming Laptop with AMD Ryzen 9 7945HX, NVIDIA GeForce RTX 4080, 32GB DDR5, 1TB PCIe 4.0 SSD, 17.3" QHD 240Hz Display', 2499.99, 'uploads/products/ASUS ROG Strix G17.png', 8),
+('Bose QuietComfort Ultra', 'Bose QuietComfort Ultra Headphones with Spatial Audio, World-class noise cancellation, Bluetooth, Up to 24 hours battery life, Black', 429.99, 'uploads/products/Bose QuietComfort Ultra.png', 25),
+('DJI Mini 3 Pro', 'DJI Mini 3 Pro Drone with 4K HDR Video, 48MP Photo, 34-min Flight Time, Tri-Directional Obstacle Sensing, Ideal for Aerial Photography and Social Media', 759.99, 'uploads/products/DJI Mini 3 Pro.png', 12);
