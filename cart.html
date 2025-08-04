@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - ProTechMate</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .cart-page {
+            padding: 2rem 0;
+        }
+        .cart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 1rem;
+        }
+        .cart-header h1 {
+            font-size: 2rem;
+            color: #333;
+        }
+        .cart-items {
+            margin-bottom: 2rem;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .cart-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+        .cart-item-details {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .cart-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .cart-item-info h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+        .cart-item-price {
+            color: #ff6b6b;
+            font-weight: 600;
+        }
+        .cart-item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .quantity-btn {
+            background: rgba(102, 126, 234, 0.1);
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .quantity-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+        .cart-item-total {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .cart-summary {
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        .cart-summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .cart-summary-row.total {
+            border-top: 2px solid #eee;
+            padding-top: 1rem;
+            margin-top: 1rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        .cart-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        .empty-cart {
+            text-align: center;
+            padding: 3rem;
+        }
+        .empty-cart i {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 1rem;
+        }
+        .empty-cart p {
+            font-size: 1.2rem;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="index.html" class="logo">ProTechMate</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About Us</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+                <div id="userSection" class="hidden">
+                    <span id="welcomeText"></span>
+                    <div class="cart-icon" onclick="location.href='cart.html'">
+                        🛒 <span id="cartCount" class="cart-count hidden">0</span>
+                    </div>
+                    <button class="btn" onclick="logout()">Logout</button>
+                </div>
+                <div id="guestSection">
+                    <a href="login.html" class="btn">Login</a>
+                    <a href="register.html" class="btn">Register</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container cart-page">
+        <div class="alert alert-success" id="successAlert"></div>
+        <div class="alert alert-error" id="errorAlert"></div>
+
+        <div class="cart-container">
+            <div class="cart-header">
+                <h1><i class="fas fa-shopping-cart"></i> Shopping Cart</h1>
+                <a href="index.html" class="btn"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+            </div>
+
+            <div id="loadingCart" class="loading">Loading your cart...</div>
+            
+            <div id="cartContent">
+                <!-- Cart items will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div>
+            <div class="footer-grid">
+                <div>
+                    <h3>ProTechMate</h3>
+                    <p>Your premium destination for cutting-edge electronics and technology.</p>
+                </div>
+                <div>
+                    <h4>Quick Links</h4>
+                    <div class="quick-links">
+                        <a href="about.html">About Us</a>
+                        <a href="contact.html">Contact</a>
+                    </div>
+                </div>
+                <div>
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ProTechMate. All rights reserved. | Built with ❤️ for technology enthusiasts</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let cart = [];
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkUserStatus();
+        });
+
+        // Check if user is logged in
+        async function checkUserStatus() {
+            try {
+                const response = await fetch('api.php?action=user');
+                const data = await response.json();
+                
+                if (data.logged_in) {
+                    currentUser = data.user;
+                    showUserSection();
+                    await loadCart();
+                } else {
+                    showGuestSection();
+                    showEmptyCart('Please login to view your cart');
+                }
+            } catch (error) {
+                console.error('Error checking user status:', error);
+                showGuestSection();
+                showEmptyCart('Error loading cart. Please try again later.');
+            }
+        }
+
+        // Show user section in navigation
+        function showUserSection() {
+            document.getElementById('userSection').classList.remove('hidden');
+            document.getElementById('guestSection').classList.add('hidden');
+            document.getElementById('welcomeText').textContent = `Welcome, ${currentUser.username}!`;
+            
+            // Add admin link if user is admin
+            if (currentUser.is_admin) {
+                const adminLink = document.createElement('a');
+                adminLink.href = 'admin.php';
+                adminLink.textContent = 'Admin Panel';
+                adminLink.style.marginRight = '1rem';
+                document.getElementById('userSection').insertBefore(adminLink, document.getElementById('userSection').firstChild);
+            }
+        }
+
+        // Show guest section in navigation
+        function showGuestSection() {
+            document.getElementById('userSection').classList.add('hidden');
+            document.getElementById('guestSection').classList.remove('hidden');
+        }
+
+        // Load cart from API
+        async function loadCart() {
+            if (!currentUser) return;
+            
+            try {
+                document.getElementById('loadingCart').style.display = 'block';
+                const response = await fetch('api.php?action=cart');
+                cart = await response.json();
+                updateCartCount();
+                displayCart();
+            } catch (error) {
+                console.error('Error loading cart:', error);
+                showAlert('Error loading cart', 'error');
+            } finally {
+                document.getElementById('loadingCart').style.display = 'none';
+            }
+        }
+
+        // Update cart count in navigation
+        function updateCartCount() {
+            const cartCount = document.getElementById('cartCount');
+            const totalItems = cart.reduce((sum, item) => sum + parseInt(item.quantity), 0);
+            
+            if (totalItems > 0) {
+                cartCount.textContent = totalItems;
+                cartCount.classList.remove('hidden');
+            } else {
+                cartCount.classList.add('hidden');
+            }
+        }
+
+        // Display cart items
+        function displayCart() {
+            const cartContent = document.getElementById('cartContent');
+            
+            if (cart.length === 0) {
+                showEmptyCart('Your cart is empty');
+                return;
+            }
+            
+            let total = 0;
+            let html = '<div class="cart-items">';
+            
+            cart.forEach(item => {
+                html += `
+                    <div class="cart-item">
+                        <div class="cart-item-details">
+                            <img src="${item.image_url || 'https://via.placeholder.com/300x200?text=No+Image'}" 
+                                alt="${item.name}" class="cart-item-image">
+                            <div class="cart-item-info">
+                                <h3>${item.name}</h3>
+                                <div class="cart-item-price">$${parseFloat(item.price).toFixed(2)}</div>
+                            </div>
+                        </div>
+                        <div class="cart-item-quantity">
+                            <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${parseInt(item.quantity) - 1})">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <span>${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateQuantity(${item.id}, ${parseInt(item.quantity) + 1})">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="cart-item-total">$${parseFloat(item.total).toFixed(2)}</div>
+                        <button onclick="removeFromCart(${item.id})" class="btn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                total += parseFloat(item.total);
+            });
+            
+            html += '</div>';
+            
+            // Add cart summary
+            html += `
+                <div class="cart-summary">
+                    <div class="cart-summary-row">
+                        <span>Subtotal:</span>
+                        <span>$${total.toFixed(2)}</span>
+                    </div>
+                    <div class="cart-summary-row">
+                        <span>Shipping:</span>
+                        <span>Free</span>
+                    </div>
+                    <div class="cart-summary-row total">
+                        <span>Total:</span>
+                        <span>$${total.toFixed(2)}</span>
+                    </div>
+                </div>
+                
+                <div class="cart-actions">
+                    <a href="index.html" class="btn">Continue Shopping</a>
+                    <a href="checkout.html" class="btn-primary">Proceed to Checkout</a>
+                </div>
+            `;
+            
+            cartContent.innerHTML = html;
+        }
+
+        // Show empty cart message
+        function showEmptyCart(message) {
+            const cartContent = document.getElementById('cartContent');
+            cartContent.innerHTML = `
+                <div class="empty-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>${message}</p>
+                    <a href="index.html" class="btn-primary">Browse Products</a>
+                </div>
+            `;
+        }
+
+        // Remove item from cart
+        async function removeFromCart(cartId) {
+            try {
+                const response = await fetch('api.php?action=cart', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ cart_id: cartId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    await loadCart();
+                    showAlert('Item removed from cart', 'success');
+                } else {
+                    showAlert(result.error || 'Failed to remove item', 'error');
+                }
+            } catch (error) {
+                showAlert('Error removing item', 'error');
+            }
+        }
+
+        // Update item quantity
+        async function updateQuantity(cartId, newQuantity) {
+            if (newQuantity <= 0) {
+                removeFromCart(cartId);
+                return;
+            }
+            
+            try {
+                // This would require a new API endpoint to update quantity
+                // For now, we'll just remove and add again
+                const item = cart.find(i => i.id == cartId);
+                if (!item) return;
+                
+                await removeFromCart(cartId);
+                
+                const response = await fetch('api.php?action=cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product_id: item.product_id,
+                        quantity: newQuantity
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    await loadCart();
+                } else {
+                    showAlert(result.error || 'Failed to update quantity', 'error');
+                }
+            } catch (error) {
+                showAlert('Error updating quantity', 'error');
+            }
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                await fetch('api.php?action=logout', { method: 'POST' });
+                currentUser = null;
+                cart = [];
+                showGuestSection();
+                updateCartCount();
+                showEmptyCart('Please login to view your cart');
+                showAlert('Logged out successfully', 'success');
+            } catch (error) {
+                showAlert('Error during logout', 'error');
+            }
+        }
+
+        // Utility functions
+        function showAlert(message, type) {
+            const alertElement = document.getElementById(type === 'success' ? 'successAlert' : 'errorAlert');
+            alertElement.textContent = message;
+            alertElement.style.display = 'block';
+            
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

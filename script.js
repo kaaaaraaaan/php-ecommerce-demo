@@ -116,7 +116,7 @@ async function logout() {
 async function addToCart(productId) {
     if (!currentUser) {
         showAlert('Please login to add items to cart', 'error');
-        openLogin();
+        window.location.href = 'login.html';
         return;
     }
     
@@ -169,55 +169,7 @@ function updateCartCount() {
     }
 }
 
-function openCart() {
-    if (!currentUser) {
-        showAlert('Please login to view cart', 'error');
-        openLogin();
-        return;
-    }
-    
-    displayCart();
-    document.getElementById('cartModal').style.display = 'block';
-}
-
-function closeCart() {
-    document.getElementById('cartModal').style.display = 'none';
-}
-
-function displayCart() {
-    const cartItems = document.getElementById('cartItems');
-    const cartTotal = document.getElementById('cartTotal');
-    
-    if (cart.length === 0) {
-        cartItems.innerHTML = '<p>Your cart is empty</p>';
-        cartTotal.innerHTML = '';
-        document.getElementById('checkoutBtn').style.display = 'none';
-        return;
-    }
-    
-    let total = 0;
-    cartItems.innerHTML = '';
-    
-    cart.forEach(item => {
-        const itemElement = document.createElement('div');
-        itemElement.className = 'cart-item';
-        itemElement.innerHTML = `
-            <div>
-                <strong>${item.name}</strong><br>
-                $${parseFloat(item.price).toFixed(2)} x ${item.quantity}
-            </div>
-            <div>
-                $${parseFloat(item.total).toFixed(2)}
-                <button onclick="removeFromCart(${item.id})" style="margin-left: 1rem; background: #ff4757; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 3px; cursor: pointer;">Remove</button>
-            </div>
-        `;
-        cartItems.appendChild(itemElement);
-        total += parseFloat(item.total);
-    });
-    
-    cartTotal.innerHTML = `Total: $${total.toFixed(2)}`;
-    document.getElementById('checkoutBtn').style.display = 'block';
-}
+// Cart modal functions removed - now using separate cart.html page
 
 async function removeFromCart(cartId) {
     try {
@@ -233,7 +185,6 @@ async function removeFromCart(cartId) {
         
         if (result.success) {
             await loadCart();
-            displayCart();
             showAlert('Item removed from cart', 'success');
         } else {
             showAlert(result.error || 'Failed to remove item', 'error');
@@ -243,34 +194,7 @@ async function removeFromCart(cartId) {
     }
 }
 
-async function checkout() {
-    if (cart.length === 0) {
-        showAlert('Your cart is empty', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch('api.php?action=checkout', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            cart = [];
-            updateCartCount();
-            closeCart();
-            showAlert(`Order placed successfully! Order ID: ${result.order_id}`, 'success');
-        } else {
-            showAlert(result.error || 'Checkout failed', 'error');
-        }
-    } catch (error) {
-        showAlert('Error during checkout', 'error');
-    }
-}
+// Checkout function moved to checkout.html page
 
 // Utility functions
 function showAlert(message, type) {
@@ -287,13 +211,4 @@ function scrollToProducts() {
     document.getElementById('productsSection').scrollIntoView({ behavior: 'smooth' });
 }
 
-// Close modals when clicking outside
-window.onclick = function(event) {
-    const modals = ['loginModal', 'registerModal', 'cartModal'];
-    modals.forEach(modalId => {
-        const modal = document.getElementById(modalId);
-        if (event.target == modal) {
-            modal.style.display = 'none';
-        }
-    });
-}
+// Modal handling removed - now using separate pages

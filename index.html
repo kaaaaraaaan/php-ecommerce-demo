@@ -18,7 +18,7 @@
                 <a href="contact.html" class="nav-link">Contact</a>
                 <div id="userSection" class="hidden">
                     <span id="welcomeText"></span>
-                    <div class="cart-icon" onclick="openCart()">
+                    <div class="cart-icon" onclick="location.href='cart.html'">
                         🛒 <span id="cartCount" class="cart-count hidden">0</span>
                     </div>
                     <button class="btn" onclick="logout()">Logout</button>
@@ -50,18 +50,7 @@
 
 
 
-    <!-- Cart Modal -->
-    <div id="cartModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeCart()">&times;</span>
-            <h2>Shopping Cart</h2>
-            <div id="cartItems"></div>
-            <div id="cartTotal" class="cart-total"></div>
-            <button id="checkoutBtn" class="btn-primary" onclick="checkout()" style="width: 100%; margin-top: 1rem;">
-                Checkout
-            </button>
-        </div>
-    </div>
+    <!-- Cart Modal removed - now using separate cart.html and checkout.html pages -->
 
     <!-- Footer -->
     <footer>
