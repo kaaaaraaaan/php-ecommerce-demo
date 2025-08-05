@@ -22,6 +22,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             requireAdmin();
             getAllProducts();
             break;
+        case 'add_category':
+            requireAdmin();
+            addCategory();
+            break;
+        case 'delete_category':
+            requireAdmin();
+            deleteCategory();
+            break;
+        case 'update_category':
+            requireAdmin();
+            updateCategory();
+            break;
     }
     exit;
 }
@@ -68,13 +80,15 @@ function addProduct() {
         }
         
         try {
-            $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image_url, stock_quantity) VALUES (?, ?, ?, ?, ?)");
+            $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
+            $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image_url, stock_quantity, category_id) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $_POST['name'],
                 $_POST['description'] ?? '',
                 $_POST['price'],
                 $imageUrl,
-                $_POST['stock_quantity'] ?? 0
+                $_POST['stock_quantity'] ?? 0,
+                $categoryId
             ]);
             
             echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
@@ -145,13 +159,15 @@ function updateProduct() {
         }
         
         try {
-            $stmt = $pdo->prepare("UPDATE products SET name = ?, description = ?, price = ?, image_url = ?, stock_quantity = ? WHERE id = ?");
+            $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
+            $stmt = $pdo->prepare("UPDATE products SET name = ?, description = ?, price = ?, image_url = ?, stock_quantity = ?, category_id = ? WHERE id = ?");
             $stmt->execute([
                 $_POST['name'],
                 $_POST['description'],
                 $_POST['price'],
                 $imageUrl,
                 $_POST['stock_quantity'],
+                $categoryId,
                 $_POST['id']
             ]);
             
@@ -169,12 +185,86 @@ function updateProduct() {
 function getAllProducts() {
     global $pdo;
     try {
-        $stmt = $pdo->query("SELECT * FROM products ORDER BY created_at DESC");
+        $stmt = $pdo->query("SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.created_at DESC");
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode($products);
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to fetch products']);
+    }
+}
+
+function addCategory() {
+    global $pdo;
+    
+    if (isset($_POST['name'])) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO categories (name, description) VALUES (?, ?)");
+            $stmt->execute([
+                $_POST['name'],
+                $_POST['description'] ?? ''
+            ]);
+            
+            echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to add category: ' . $e->getMessage()]);
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => 'Category name required']);
+    }
+}
+
+function deleteCategory() {
+    global $pdo;
+    
+    if (isset($_POST['id'])) {
+        try {
+            // Check if category is being used by products
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE category_id = ?");
+            $stmt->execute([$_POST['id']]);
+            $productCount = $stmt->fetchColumn();
+            
+            if ($productCount > 0) {
+                echo json_encode(['error' => 'Cannot delete category. It is being used by ' . $productCount . ' product(s).']);
+                return;
+            }
+            
+            $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
+            $stmt->execute([$_POST['id']]);
+            
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to delete category']);
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => 'Category ID required']);
+    }
+}
+
+function updateCategory() {
+    global $pdo;
+    
+    if (isset($_POST['id']) && isset($_POST['name'])) {
+        try {
+            $stmt = $pdo->prepare("UPDATE categories SET name = ?, description = ? WHERE id = ?");
+            $stmt->execute([
+                $_POST['name'],
+                $_POST['description'] ?? '',
+                $_POST['id']
+            ]);
+            
+            echo json_encode(['success' => true]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Failed to update category: ' . $e->getMessage()]);
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => 'Category ID and name required']);
     }
 }
 ?>
@@ -188,59 +278,6 @@ function getAllProducts() {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin.css">
-    <style>
-        .image-preview {
-            margin-top: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            text-align: center;
-        }
-        
-        .image-preview img {
-            max-width: 100%;
-            max-height: 200px;
-            border-radius: 6px;
-            margin-bottom: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-        
-        .image-preview img:hover {
-            transform: scale(1.02);
-        }
-        
-        .image-preview p {
-            color: #aaa;
-            font-size: 0.9rem;
-            margin: 5px 0 0;
-        }
-        
-        input[type="file"] {
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            width: 100%;
-            cursor: pointer;
-        }
-        
-        input[type="file"]::-webkit-file-upload-button {
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            border: none;
-            border-radius: 4px;
-            color: white;
-            padding: 8px 16px;
-            margin-right: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        input[type="file"]::-webkit-file-upload-button:hover {
-            background: linear-gradient(45deg, #764ba2, #667eea);
-            transform: translateY(-1px);
-        }
-    </style>
 </head>
 <body>
     <div class="header">
@@ -259,6 +296,9 @@ function getAllProducts() {
             </button>
             <button class="tab-btn" onclick="switchTab('orders')">
                 <i class="fas fa-shopping-cart"></i> Orders
+            </button>
+            <button class="tab-btn" onclick="switchTab('categories')">
+                <i class="fas fa-tags"></i> Category Management
             </button>
             <button class="tab-btn" onclick="switchTab('users')">
                 <i class="fas fa-users"></i> User Management
@@ -286,6 +326,13 @@ function getAllProducts() {
                     <input type="number" id="price" name="price" step="0.01" required>
                 </div>
                 <div class="form-group">
+                    <label for="category_id">Category</label>
+                    <select id="category_id" name="category_id">
+                        <option value="">Select a category (optional)</option>
+                        <!-- Categories will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="product_image">Product Image</label>
                     <input type="file" id="product_image" name="product_image" accept="image/*">
                     <div class="image-preview" id="imagePreview">
@@ -305,6 +352,31 @@ function getAllProducts() {
                 <h2><i class="fas fa-cogs"></i> Manage Products</h2>
                 <div class="products-grid" id="productsGrid">
                     <!-- Products will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Tab -->
+        <div class="tab-content" id="categories-tab" style="display: none;">
+            <div class="card">
+                <h2><i class="fas fa-plus-circle"></i> Add New Category</h2>
+                <form id="categoryForm">
+                    <div class="form-group">
+                        <label for="categoryName">Category Name</label>
+                        <input type="text" id="categoryName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoryDescription">Description</label>
+                        <textarea id="categoryDescription" name="description" rows="3" placeholder="Optional description for this category"></textarea>
+                    </div>
+                    <button type="submit" class="btn">Add Category</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-tags"></i> Manage Categories</h2>
+                <div class="categories-grid" id="categoriesGrid">
+                    <!-- Categories will be loaded here -->
                 </div>
             </div>
         </div>
@@ -468,6 +540,13 @@ function getAllProducts() {
                     <input type="number" id="editPrice" name="price" step="0.01" required>
                 </div>
                 <div class="form-group">
+                    <label for="editCategoryId">Category</label>
+                    <select id="editCategoryId" name="category_id">
+                        <option value="">Select a category (optional)</option>
+                        <!-- Categories will be loaded dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="editProductImage">Product Image</label>
                     <input type="file" id="editProductImage" name="product_image" accept="image/*">
                     <div class="image-preview" id="editImagePreview">
@@ -481,6 +560,28 @@ function getAllProducts() {
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn" id="updateProductBtn">Update Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Category Modal -->
+    <div id="editCategoryModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditCategoryModal()">&times;</span>
+            <h2>Edit Category</h2>
+            <form id="editCategoryForm">
+                <input type="hidden" id="editCategoryId" name="id">
+                <div class="form-group">
+                    <label for="editCategoryName">Category Name</label>
+                    <input type="text" id="editCategoryName" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCategoryDescription">Description</label>
+                    <textarea id="editCategoryDescription" name="description" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn" id="updateCategoryBtn">Update Category</button>
                 </div>
             </form>
         </div>
@@ -510,6 +611,8 @@ function getAllProducts() {
             // Load data for the selected tab
             if (tabName === 'products') {
                 loadProducts();
+            } else if (tabName === 'categories') {
+                loadCategoriesForManagement();
             } else if (tabName === 'orders') {
                 loadOrders();
             } else if (tabName === 'users') {
@@ -521,6 +624,7 @@ function getAllProducts() {
 
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            loadCategories();
             loadProducts();
         });
 
@@ -651,12 +755,77 @@ function getAllProducts() {
             }
         }
 
+        async function loadCategories() {
+            try {
+                const response = await fetch('api.php?action=categories');
+                const categories = await response.json();
+                
+                // Populate category dropdowns
+                const categorySelect = document.getElementById('category_id');
+                const editCategorySelect = document.getElementById('editCategoryId');
+                
+                // Clear existing options (except the first one)
+                categorySelect.innerHTML = '<option value="">Select a category (optional)</option>';
+                editCategorySelect.innerHTML = '<option value="">Select a category (optional)</option>';
+                
+                categories.forEach(category => {
+                    const option1 = document.createElement('option');
+                    option1.value = category.id;
+                    option1.textContent = category.name;
+                    categorySelect.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = category.id;
+                    option2.textContent = category.name;
+                    editCategorySelect.appendChild(option2);
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        async function loadCategoriesForManagement() {
+            try {
+                const response = await fetch('api.php?action=categories');
+                const categories = await response.json();
+                
+                const grid = document.getElementById('categoriesGrid');
+                grid.innerHTML = '';
+                
+                categories.forEach(category => {
+                    const categoryCard = createCategoryCard(category);
+                    grid.appendChild(categoryCard);
+                });
+            } catch (error) {
+                showAlert('Error loading categories', 'error');
+            }
+        }
+
+        function createCategoryCard(category) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML = `
+                <div class="category-icon">
+                    <i class="fas fa-tag fa-3x"></i>
+                </div>
+                <h3>${category.name}</h3>
+                <p>${category.description || 'No description provided'}</p>
+                <p><small>Created: ${new Date(category.created_at).toLocaleDateString()}</small></p>
+                <div class="product-actions">
+                    <button class="btn" onclick="editCategory(${category.id})">Edit</button>
+                    <button class="btn btn-danger" onclick="deleteCategory(${category.id})">Delete</button>
+                </div>
+            `;
+            return card;
+        }
+
         function createProductCard(product) {
             const card = document.createElement('div');
             card.className = 'product-card';
             card.innerHTML = `
                 <img src="${product.image_url || 'https://via.placeholder.com/300x200?text=No+Image'}" 
                      alt="${product.name}" class="product-image">
+                ${product.category_name ? `<div class="product-category"><i class="fas fa-tag"></i> ${product.category_name}</div>` : '<div class="product-category no-category"><i class="fas fa-question"></i> No Category</div>'}
                 <h3>${product.name}</h3>
                 <p>${product.description}</p>
                 <p><strong>Price: $${parseFloat(product.price).toFixed(2)}</strong></p>
@@ -685,6 +854,7 @@ function getAllProducts() {
                         document.getElementById('editPrice').value = product.price;
                         document.getElementById('currentImageUrl').value = product.image_url;
                         document.getElementById('editStockQuantity').value = product.stock_quantity;
+                        document.getElementById('editCategoryId').value = product.category_id || '';
                         
                         // Set the preview image
                         const previewImg = document.getElementById('editPreviewImg');
@@ -1093,6 +1263,111 @@ function getAllProducts() {
                 }
             } catch (error) {
                 showAlert('Error deleting user: ' + error.message, 'error');
+            }
+        }
+
+        // Category management functions
+        document.getElementById('categoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('admin.php?action=add_category', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Category added successfully!', 'success');
+                    e.target.reset();
+                    loadCategories(); // Refresh dropdowns
+                    loadCategoriesForManagement(); // Refresh category grid
+                } else {
+                    showAlert(result.error || 'Failed to add category', 'error');
+                }
+            } catch (error) {
+                showAlert('Error adding category: ' + error.message, 'error');
+            }
+        });
+
+        function editCategory(id) {
+            // Find category data
+            fetch('api.php?action=categories')
+                .then(response => response.json())
+                .then(categories => {
+                    const category = categories.find(c => c.id == id);
+                    if (category) {
+                        // Reset the form first
+                        document.getElementById('editCategoryForm').reset();
+                        
+                        document.getElementById('editCategoryId').value = category.id;
+                        document.getElementById('editCategoryName').value = category.name;
+                        document.getElementById('editCategoryDescription').value = category.description || '';
+                        
+                        document.getElementById('editCategoryModal').style.display = 'block';
+                    }
+                });
+        }
+
+        function closeEditCategoryModal() {
+            document.getElementById('editCategoryModal').style.display = 'none';
+            document.getElementById('editCategoryForm').reset();
+        }
+
+        document.getElementById('editCategoryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('admin.php?action=update_category', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Category updated successfully!', 'success');
+                    closeEditCategoryModal();
+                    loadCategories(); // Refresh dropdowns
+                    loadCategoriesForManagement(); // Refresh category grid
+                } else {
+                    showAlert(result.error || 'Failed to update category', 'error');
+                }
+            } catch (error) {
+                showAlert('Error updating category: ' + error.message, 'error');
+            }
+        });
+
+        async function deleteCategory(id) {
+            if (!confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('admin.php?action=delete_category', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Category deleted successfully!', 'success');
+                    loadCategories(); // Refresh dropdowns
+                    loadCategoriesForManagement(); // Refresh category grid
+                } else {
+                    showAlert(result.error || 'Failed to delete category', 'error');
+                }
+            } catch (error) {
+                showAlert('Error deleting category: ' + error.message, 'error');
             }
         }
     </script>

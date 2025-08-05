@@ -16,6 +16,12 @@ switch ($request) {
         }
         break;
     
+    case 'categories':
+        if ($method === 'GET') {
+            getCategories();
+        }
+        break;
+    
     case 'login':
         if ($method === 'POST') {
             login();
@@ -92,7 +98,26 @@ switch ($request) {
 function getProducts() {
     global $pdo;
     try {
-        $stmt = $pdo->query("SELECT * FROM products WHERE stock_quantity > 0 ORDER BY created_at DESC");
+        $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
+        
+        $query = "SELECT p.*, c.name as category_name 
+                  FROM products p 
+                  LEFT JOIN categories c ON p.category_id = c.id 
+                  WHERE p.stock_quantity > 0";
+        
+        if ($categoryId) {
+            $query .= " AND p.category_id = :category_id";
+        }
+        
+        $query .= " ORDER BY p.created_at DESC";
+        
+        $stmt = $pdo->prepare($query);
+        
+        if ($categoryId) {
+            $stmt->bindParam(':category_id', $categoryId, PDO::PARAM_INT);
+        }
+        
+        $stmt->execute();
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode($products);
     } catch (Exception $e) {
@@ -620,6 +645,18 @@ function updateContactStatus() {
     }
     
     $stmt->close();
+}
+
+function getCategories() {
+    global $pdo;
+    try {
+        $stmt = $pdo->query("SELECT * FROM categories ORDER BY name ASC");
+        $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode($categories);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to fetch categories']);
+    }
 }
 
 ?>
