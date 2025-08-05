@@ -315,9 +315,7 @@
 
     <!-- Product Detail Section -->
     <section class="product-detail-container">
-        <div id="loadingSpinner" class="loading-spinner">
-            <div class="spinner"></div>
-        </div>
+
 
         <div id="errorMessage" class="error-message hidden">
             Product not found or failed to load.
@@ -599,7 +597,7 @@
 
         // Display product details
         function displayProductDetails(product) {
-            document.getElementById('loadingSpinner').classList.add('hidden');
+            // Show product details card
             document.getElementById('productDetailCard').classList.remove('hidden');
 
             // Update page title
