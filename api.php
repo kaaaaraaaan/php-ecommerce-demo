@@ -16,6 +16,12 @@ switch ($request) {
         }
         break;
     
+    case 'product':
+        if ($method === 'GET') {
+            getProduct();
+        }
+        break;
+    
     case 'categories':
         if ($method === 'GET') {
             getCategories();
@@ -123,6 +129,40 @@ function getProducts() {
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to fetch products']);
+    }
+}
+
+function getProduct() {
+    global $pdo;
+    try {
+        $productId = isset($_GET['id']) ? (int)$_GET['id'] : null;
+        
+        if (!$productId) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Product ID is required']);
+            return;
+        }
+        
+        $query = "SELECT p.*, c.name as category_name 
+                  FROM products p 
+                  LEFT JOIN categories c ON p.category_id = c.id 
+                  WHERE p.id = :product_id";
+        
+        $stmt = $pdo->prepare($query);
+        $stmt->bindParam(':product_id', $productId, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($product) {
+            echo json_encode($product);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'Product not found']);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to fetch product']);
     }
 }
 

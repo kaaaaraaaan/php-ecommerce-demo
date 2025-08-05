@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await checkUserStatus();
     await loadCategories();
     await loadProducts();
+    initializeStatsAnimation();
 });
 
 // Check if user is logged in
@@ -138,6 +139,7 @@ function displayProducts() {
 function createProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
+    card.style.cursor = 'pointer';
     card.innerHTML = `
         <img src="${product.image_url || 'https://via.placeholder.com/300x200?text=No+Image'}" 
              alt="${product.name}" class="product-image">
@@ -146,11 +148,22 @@ function createProductCard(product) {
             <div class="product-name">${product.name}</div>
             <div class="product-description">${product.description}</div>
             <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
-            <button class="add-to-cart" onclick="addToCart(${product.id})">
-                <i class="fas fa-shopping-cart"></i> Add to Cart
-            </button>
+            <div class="product-actions">
+                <button class="view-product" onclick="event.stopPropagation(); window.location.href='product.html?id=${product.id}'">
+                    <i class="fas fa-eye"></i> View Details
+                </button>
+                <button class="add-to-cart" onclick="event.stopPropagation(); addToCart(${product.id})">
+                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                </button>
+            </div>
         </div>
     `;
+    
+    // Make the entire card clickable to view product details
+    card.addEventListener('click', () => {
+        window.location.href = `product.html?id=${product.id}`;
+    });
+    
     return card;
 }
 
@@ -256,19 +269,121 @@ async function removeFromCart(cartId) {
 
 // Checkout function moved to checkout.html page
 
+// Load categories for homepage display
+async function loadCategoriesForHomepage() {
+    try {
+        const response = await fetch('api.php?action=categories');
+        const categories = await response.json();
+        displayCategoriesGrid(categories);
+    } catch (error) {
+        console.error('Error loading categories for homepage:', error);
+    }
+}
+
+// Display categories in homepage grid
+function displayCategoriesGrid(categories) {
+    const categoriesGrid = document.getElementById('categoriesGrid');
+    if (!categoriesGrid) return;
+    
+    categoriesGrid.innerHTML = '';
+    
+    // Category icons mapping
+    const categoryIcons = {
+        'Laptops': 'fas fa-laptop',
+        'Smartphones': 'fas fa-mobile-alt',
+        'Audio': 'fas fa-headphones',
+        'Tablets': 'fas fa-tablet-alt',
+        'Gaming': 'fas fa-gamepad',
+        'Drones': 'fas fa-helicopter',
+        'default': 'fas fa-tag'
+    };
+    
+    categories.forEach(category => {
+        const categoryCard = document.createElement('div');
+        categoryCard.className = 'category-card';
+        categoryCard.onclick = () => {
+            // Filter products by this category and scroll to products section
+            filterByCategory(category.id);
+            scrollToProducts();
+        };
+        
+        const iconClass = categoryIcons[category.name] || categoryIcons['default'];
+        
+        categoryCard.innerHTML = `
+            <div class="category-icon">
+                <i class="${iconClass}"></i>
+            </div>
+            <h3>${category.name}</h3>
+            <p>${category.description || 'Explore our ' + category.name.toLowerCase() + ' collection'}</p>
+        `;
+        
+        categoriesGrid.appendChild(categoryCard);
+    });
+}
+
+// Initialize statistics animation
+function initializeStatsAnimation() {
+    const statNumbers = document.querySelectorAll('.stat-number[data-target]');
+    
+    // Create intersection observer for stats animation
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateStatNumber(entry.target);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    statNumbers.forEach(stat => {
+        observer.observe(stat);
+    });
+}
+
+// Animate stat number counting up
+function animateStatNumber(element) {
+    const target = parseInt(element.getAttribute('data-target'));
+    const duration = 2000; // 2 seconds
+    const increment = target / (duration / 16); // 60fps
+    let current = 0;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            current = target;
+            clearInterval(timer);
+        }
+        
+        // Format number with commas
+        element.textContent = Math.floor(current).toLocaleString();
+        
+        // Add + for certain stats
+        if (target >= 1000) {
+            element.textContent += '+';
+        }
+    }, 16);
+}
+
+// Newsletter section removed
 // Utility functions
-function showAlert(message, type) {
-    const alertElement = document.getElementById(type === 'success' ? 'successAlert' : 'errorAlert');
-    alertElement.textContent = message;
-    alertElement.style.display = 'block';
+function showAlert(message, type = 'success') {
+    const alertDiv = document.getElementById(type === 'success' ? 'successAlert' : 'errorAlert');
+    alertDiv.textContent = message;
+    alertDiv.style.display = 'block';
     
     setTimeout(() => {
-        alertElement.style.display = 'none';
+        alertDiv.style.display = 'none';
     }, 5000);
 }
 
 function scrollToProducts() {
     document.getElementById('productsSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Categories section removed
+function scrollToCategories() {
+    // Scroll to products section instead since categories section was removed
+    scrollToProducts();
 }
 
 // Modal handling removed - now using separate pages

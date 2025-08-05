@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - TechMart</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .product-detail-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .product-detail-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .product-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .product-image-section {
+            position: relative;
+        }
+
+        .product-main-image {
+            width: 100%;
+            max-width: 500px;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .product-main-image:hover {
+            transform: scale(1.05);
+        }
+
+        .product-info-section {
+            padding: 1rem 0;
+        }
+
+        .product-category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        .product-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .product-price {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
+        }
+
+        .product-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .product-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .product-detail-item {
+            background: rgba(248, 250, 252, 0.8);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+
+        .product-detail-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .product-detail-value {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .quantity-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 10px;
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+
+        .quantity-btn {
+            background: none;
+            border: none;
+            padding: 0.5rem 1rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #333;
+            transition: background-color 0.3s ease;
+        }
+
+        .quantity-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .quantity-input {
+            border: none;
+            background: none;
+            text-align: center;
+            width: 60px;
+            padding: 0.5rem;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-add-to-cart {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            justify-content: center;
+            min-width: 200px;
+        }
+
+        .btn-add-to-cart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-back {
+            background: white;
+            color: #333;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-back:hover {
+            background: rgba(248, 250, 252, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stock-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stock-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .in-stock {
+            background: #28a745;
+        }
+
+        .low-stock {
+            background: #ffc107;
+        }
+
+        .out-of-stock {
+            background: #dc3545;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 400px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            color: #dc3545;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .product-detail-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .product-title {
+                font-size: 2rem;
+            }
+
+            .product-price {
+                font-size: 1.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn-add-to-cart,
+            .btn-back {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="index.html" class="logo">TechMart</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About Us</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+                <div id="userSection" class="hidden">
+                    <span id="welcomeText"></span>
+                    <div class="cart-icon" onclick="location.href='cart.html'">
+                        🛒 <span id="cartCount" class="cart-count hidden">0</span>
+                    </div>
+                    <button class="btn" onclick="logout()">Logout</button>
+                </div>
+                <div id="guestSection">
+                    <a href="login.html" class="btn">Login</a>
+                    <a href="register.html" class="btn">Register</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Product Detail Section -->
+    <section class="product-detail-container">
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="errorMessage" class="error-message hidden">
+            Product not found or failed to load.
+        </div>
+
+        <div id="productDetailCard" class="product-detail-card hidden">
+            <div class="product-detail-grid">
+                <!-- Product Image Section -->
+                <div class="product-image-section">
+                    <img id="productImage" src="" alt="" class="product-main-image">
+                </div>
+
+                <!-- Product Info Section -->
+                <div class="product-info-section">
+                    <div id="productCategory" class="product-category-badge"></div>
+                    <h1 id="productTitle" class="product-title"></h1>
+                    <div id="productPrice" class="product-price"></div>
+                    
+                    <div id="stockStatus" class="stock-status">
+                        <div id="stockIndicator" class="stock-indicator"></div>
+                        <span id="stockText"></span>
+                    </div>
+
+                    <p id="productDescription" class="product-description"></p>
+
+                    <div class="product-details-grid">
+                        <div class="product-detail-item">
+                            <div class="product-detail-label">
+                                <i class="fas fa-tag"></i>
+                                Product ID
+                            </div>
+                            <div id="productId" class="product-detail-value"></div>
+                        </div>
+                        <div class="product-detail-item">
+                            <div class="product-detail-label">
+                                <i class="fas fa-calendar"></i>
+                                Added Date
+                            </div>
+                            <div id="productDate" class="product-detail-value"></div>
+                        </div>
+                        <div class="product-detail-item">
+                            <div class="product-detail-label">
+                                <i class="fas fa-boxes"></i>
+                                Stock Quantity
+                            </div>
+                            <div id="stockQuantity" class="product-detail-value"></div>
+                        </div>
+                    </div>
+
+                    <div class="quantity-selector">
+                        <span class="quantity-label">Quantity:</span>
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="decreaseQuantity()">-</button>
+                            <input type="number" id="quantityInput" class="quantity-input" value="1" min="1">
+                            <button class="quantity-btn" onclick="increaseQuantity()">+</button>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <a href="index.html" class="btn-back">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Products
+                        </a>
+                        <button id="addToCartBtn" class="btn-add-to-cart" onclick="addToCartWithQuantity()">
+                            <i class="fas fa-shopping-cart"></i>
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Shared functions from script.js that we need
+        let currentUser = null;
+        
+        // Check if user is logged in
+        async function checkUserStatus() {
+            try {
+                const response = await fetch('api.php?action=user');
+                const data = await response.json();
+                
+                if (data.logged_in) {
+                    currentUser = data.user;
+                    showUserSection();
+                    await loadCart();
+                } else {
+                    showGuestSection();
+                }
+            } catch (error) {
+                console.error('Error checking user status:', error);
+                showGuestSection();
+            }
+        }
+        
+        // Show user section in navigation
+        function showUserSection() {
+            const userSection = document.getElementById('userSection');
+            const guestSection = document.getElementById('guestSection');
+            const welcomeText = document.getElementById('welcomeText');
+            
+            if (userSection) userSection.classList.remove('hidden');
+            if (guestSection) guestSection.classList.add('hidden');
+            if (welcomeText) welcomeText.textContent = `Welcome, ${currentUser.username}!`;
+            
+            // Add admin link if user is admin
+            if (currentUser.is_admin && userSection) {
+                const adminLink = document.createElement('a');
+                adminLink.href = 'admin.php';
+                adminLink.textContent = 'Admin Panel';
+                adminLink.style.marginRight = '1rem';
+                userSection.insertBefore(adminLink, userSection.firstChild);
+            }
+        }
+        
+        // Show guest section
+        function showGuestSection() {
+            const userSection = document.getElementById('userSection');
+            const guestSection = document.getElementById('guestSection');
+            
+            if (userSection) userSection.classList.add('hidden');
+            if (guestSection) guestSection.classList.remove('hidden');
+        }
+        
+        // Load cart
+        async function loadCart() {
+            try {
+                const response = await fetch('api.php?action=cart');
+                const data = await response.json();
+                if (response.ok) {
+                    updateCartCount();
+                }
+            } catch (error) {
+                console.error('Error loading cart:', error);
+            }
+        }
+        
+        // Update cart count
+        async function updateCartCount() {
+            try {
+                const response = await fetch('api.php?action=cart');
+                const data = await response.json();
+                if (response.ok) {
+                    const cartCount = data.reduce((total, item) => total + parseInt(item.quantity), 0);
+                    const cartCountElement = document.getElementById('cartCount');
+                    if (cartCountElement) {
+                        cartCountElement.textContent = cartCount;
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating cart count:', error);
+            }
+        }
+        
+        // Logout function
+        async function logout() {
+            try {
+                const response = await fetch('api.php?action=logout', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    currentUser = null;
+                    showGuestSection();
+                    updateCartCount();
+                    showAlert('Logged out successfully!', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    showAlert('Error logging out', 'error');
+                }
+            } catch (error) {
+                console.error('Error logging out:', error);
+                showAlert('Error logging out', 'error');
+            }
+        }
+        
+        // Show alert function
+        function showAlert(message, type = 'info') {
+            // Create alert element
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                border-radius: 10px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            // Set background color based on type
+            switch(type) {
+                case 'success':
+                    alert.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+                    break;
+                case 'error':
+                    alert.style.background = 'linear-gradient(135deg, #dc3545, #e74c3c)';
+                    break;
+                case 'warning':
+                    alert.style.background = 'linear-gradient(135deg, #ffc107, #fd7e14)';
+                    break;
+                default:
+                    alert.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+            }
+            
+            alert.textContent = message;
+            document.body.appendChild(alert);
+            
+            // Remove alert after 3 seconds
+            setTimeout(() => {
+                alert.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.parentNode.removeChild(alert);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Add CSS for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+    <script>
+        let currentProduct = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkUserStatus();
+            await loadProductDetails();
+        });
+
+        // Get product ID from URL parameters
+        function getProductIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // Load product details
+        async function loadProductDetails() {
+            const productId = getProductIdFromUrl();
+            
+            if (!productId) {
+                showError('No product ID specified');
+                return;
+            }
+
+            try {
+                const response = await fetch(`api.php?action=product&id=${productId}`);
+                const data = await response.json();
+
+                if (response.ok && data) {
+                    currentProduct = data;
+                    displayProductDetails(data);
+                } else {
+                    showError('Product not found');
+                }
+            } catch (error) {
+                console.error('Error loading product:', error);
+                showError('Failed to load product details');
+            }
+        }
+
+        // Display product details
+        function displayProductDetails(product) {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+            document.getElementById('productDetailCard').classList.remove('hidden');
+
+            // Update page title
+            document.title = `${product.name} - TechMart`;
+
+            // Product image
+            const productImage = document.getElementById('productImage');
+            productImage.src = product.image_url || 'https://via.placeholder.com/500x400?text=No+Image';
+            productImage.alt = product.name;
+
+            // Product category
+            const categoryElement = document.getElementById('productCategory');
+            if (product.category_name) {
+                categoryElement.textContent = product.category_name;
+                categoryElement.style.display = 'inline-block';
+            } else {
+                categoryElement.style.display = 'none';
+            }
+
+            // Product title and price
+            document.getElementById('productTitle').textContent = product.name;
+            document.getElementById('productPrice').textContent = `$${parseFloat(product.price).toFixed(2)}`;
+
+            // Stock status
+            updateStockStatus(product.stock_quantity);
+
+            // Product description
+            document.getElementById('productDescription').textContent = product.description || 'No description available.';
+
+            // Product details
+            document.getElementById('productId').textContent = `#${product.id}`;
+            document.getElementById('productDate').textContent = formatDate(product.created_at);
+            document.getElementById('stockQuantity').textContent = product.stock_quantity;
+
+            // Set max quantity
+            const quantityInput = document.getElementById('quantityInput');
+            quantityInput.max = product.stock_quantity;
+
+            // Disable add to cart if out of stock
+            const addToCartBtn = document.getElementById('addToCartBtn');
+            if (product.stock_quantity <= 0) {
+                addToCartBtn.disabled = true;
+                addToCartBtn.textContent = 'Out of Stock';
+                addToCartBtn.style.opacity = '0.5';
+                addToCartBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        // Update stock status indicator
+        function updateStockStatus(quantity) {
+            const indicator = document.getElementById('stockIndicator');
+            const text = document.getElementById('stockText');
+
+            if (quantity <= 0) {
+                indicator.className = 'stock-indicator out-of-stock';
+                text.textContent = 'Out of Stock';
+            } else if (quantity <= 10) {
+                indicator.className = 'stock-indicator low-stock';
+                text.textContent = `Low Stock (${quantity} left)`;
+            } else {
+                indicator.className = 'stock-indicator in-stock';
+                text.textContent = 'In Stock';
+            }
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Quantity controls
+        function increaseQuantity() {
+            const input = document.getElementById('quantityInput');
+            const currentValue = parseInt(input.value);
+            const maxValue = parseInt(input.max);
+            
+            if (currentValue < maxValue) {
+                input.value = currentValue + 1;
+            }
+        }
+
+        function decreaseQuantity() {
+            const input = document.getElementById('quantityInput');
+            const currentValue = parseInt(input.value);
+            
+            if (currentValue > 1) {
+                input.value = currentValue - 1;
+            }
+        }
+
+        // Add to cart with quantity
+        async function addToCartWithQuantity() {
+            if (!currentUser) {
+                showAlert('Please login to add items to cart', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+                return;
+            }
+
+            if (!currentProduct || currentProduct.stock_quantity <= 0) {
+                showAlert('Product is out of stock', 'error');
+                return;
+            }
+
+            const quantity = parseInt(document.getElementById('quantityInput').value);
+            
+            if (quantity > currentProduct.stock_quantity) {
+                showAlert(`Only ${currentProduct.stock_quantity} items available`, 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('api.php?action=cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        product_id: currentProduct.id,
+                        quantity: quantity
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`Added ${quantity} item(s) to cart!`, 'success');
+                    updateCartCount();
+                } else {
+                    showAlert(data.error || 'Failed to add to cart', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                showAlert('Failed to add to cart', 'error');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('loadingSpinner').classList.add('hidden');
+            document.getElementById('errorMessage').classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Validate quantity input
+        document.getElementById('quantityInput').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            const max = parseInt(this.max);
+            
+            if (value < 1) {
+                this.value = 1;
+            } else if (value > max) {
+                this.value = max;
+                showAlert(`Maximum quantity available: ${max}`, 'warning');
+            }
+        });
+    </script>
+
+    <!-- Footer -->
+    <footer>
+        <div>
+            <div class="footer-grid">
+                <div>
+                    <h3>TechMart</h3>
+                    <p>Your premium destination for cutting-edge electronics and technology.</p>
+                </div>
+                <div>
+                    <h4>Quick Links</h4>
+                    <div class="quick-links">
+                        <a href="about.html">About Us</a>
+                        <a href="contact.html">Contact</a>
+                    </div>
+                </div>
+                <div>
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 TechMart. All rights reserved. | Built with ❤️ for technology enthusiasts</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
