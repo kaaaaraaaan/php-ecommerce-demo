@@ -1,13 +1,20 @@
 <?php
 require_once 'config.php';
 
+// Prevent any output before JSON headers
+ob_start();
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
 header('Access-Control-Allow-Headers: Content-Type');
 
+// Clean any previous output
+ob_clean();
+
 $method = $_SERVER['REQUEST_METHOD'];
 $request = isset($_GET['action']) ? $_GET['action'] : '';
+
 
 switch ($request) {
     case 'products':
@@ -556,135 +563,130 @@ function updateUserRole() {
 
 // Submit a new contact form message
 function submitContact() {
-    global $conn;
+    global $pdo;
     
     // Validate required fields
     if (!isset($_POST['name']) || !isset($_POST['email']) || !isset($_POST['subject']) || !isset($_POST['message'])) {
+        http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'All fields are required']);
         return;
     }
     
     // Sanitize inputs
-    $name = filter_var($_POST['name'], FILTER_SANITIZE_STRING);
+    $name = htmlspecialchars(trim($_POST['name']));
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-    $subject = filter_var($_POST['subject'], FILTER_SANITIZE_STRING);
-    $message = filter_var($_POST['message'], FILTER_SANITIZE_STRING);
+    $subject = htmlspecialchars(trim($_POST['subject']));
+    $message = htmlspecialchars(trim($_POST['message']));
     
     // Validate email
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid email address']);
         return;
     }
     
-    // Insert contact message into database
-    $stmt = $conn->prepare("INSERT INTO contacts (name, email, subject, message) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $name, $email, $subject, $message);
-    
-    if ($stmt->execute()) {
+    try {
+        // Insert contact message into database
+        $stmt = $pdo->prepare("INSERT INTO contacts (name, email, subject, message) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$name, $email, $subject, $message]);
+        
         echo json_encode(['success' => true, 'message' => 'Your message has been sent successfully']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to send message: ' . $conn->error]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to send message']);
     }
-    
-    $stmt->close();
 }
 
 // Get all contact form submissions (admin only)
 function getContacts() {
-    global $conn;
+    requireAdmin();
+    global $pdo;
     
-    // Check if user is admin
-    $currentUser = getCurrentUser();
-    if (!$currentUser || $currentUser['is_admin'] != 1) {
-        echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
-        return;
+    try {
+        // Get contacts with optional status filter
+        $status = isset($_GET['status']) ? $_GET['status'] : null;
+        
+        if ($status) {
+            $stmt = $pdo->prepare("SELECT * FROM contacts WHERE status = ? ORDER BY created_at DESC");
+            $stmt->execute([$status]);
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM contacts ORDER BY created_at DESC");
+            $stmt->execute();
+        }
+        
+        $contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Get contact statistics
+        $statsStmt = $pdo->query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status");
+        $statsData = $statsStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $stats = [
+            'total' => 0,
+            'new' => 0,
+            'read' => 0,
+            'replied' => 0,
+            'archived' => 0
+        ];
+        
+        foreach ($statsData as $row) {
+            $stats[$row['status']] = (int)$row['count'];
+        }
+        
+        $totalStmt = $pdo->query("SELECT COUNT(*) as total FROM contacts");
+        $totalRow = $totalStmt->fetch(PDO::FETCH_ASSOC);
+        $stats['total'] = (int)$totalRow['total'];
+        
+        echo json_encode([
+            'success' => true, 
+            'contacts' => $contacts,
+            'stats' => $stats
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to fetch contacts']);
     }
-    
-    // Get contacts with optional status filter
-    $status = isset($_GET['status']) ? $_GET['status'] : null;
-    
-    if ($status) {
-        $stmt = $conn->prepare("SELECT * FROM contacts WHERE status = ? ORDER BY created_at DESC");
-        $stmt->bind_param("s", $status);
-    } else {
-        $stmt = $conn->prepare("SELECT * FROM contacts ORDER BY created_at DESC");
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $contacts = [];
-    
-    while ($row = $result->fetch_assoc()) {
-        $contacts[] = $row;
-    }
-    
-    // Get contact statistics
-    $stats = [
-        'total' => 0,
-        'new' => 0,
-        'read' => 0,
-        'replied' => 0,
-        'archived' => 0
-    ];
-    
-    $statsStmt = $conn->query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status");
-    while ($row = $statsStmt->fetch_assoc()) {
-        $stats[$row['status']] = (int)$row['count'];
-    }
-    
-    $totalStmt = $conn->query("SELECT COUNT(*) as total FROM contacts");
-    $totalRow = $totalStmt->fetch_assoc();
-    $stats['total'] = (int)$totalRow['total'];
-    
-    echo json_encode([
-        'success' => true, 
-        'contacts' => $contacts,
-        'stats' => $stats
-    ]);
-    
-    $stmt->close();
 }
 
 // Update contact status (admin only)
 function updateContactStatus() {
-    global $conn;
-    
-    // Check if user is admin
-    $currentUser = getCurrentUser();
-    if (!$currentUser || $currentUser['is_admin'] != 1) {
-        echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
-        return;
-    }
+    requireAdmin();
+    global $pdo;
     
     // Parse the PUT request data
-    parse_str(file_get_contents("php://input"), $putData);
+    $data = json_decode(file_get_contents('php://input'), true);
     
-    if (!isset($putData['contact_id']) || !isset($putData['status'])) {
+    if (!isset($data['contact_id']) || !isset($data['status'])) {
+        http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Missing required fields']);
         return;
     }
     
-    $contactId = $putData['contact_id'];
-    $status = $putData['status'];
+    $contactId = $data['contact_id'];
+    $status = $data['status'];
     
     // Validate status
     $validStatuses = ['new', 'read', 'replied', 'archived'];
     if (!in_array($status, $validStatuses)) {
+        http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid status']);
         return;
     }
     
-    // Update contact status
-    $stmt = $conn->prepare("UPDATE contacts SET status = ? WHERE id = ?");
-    $stmt->bind_param("si", $status, $contactId);
-    
-    if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'Contact status updated successfully']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to update contact status: ' . $conn->error]);
+    try {
+        // Update contact status
+        $stmt = $pdo->prepare("UPDATE contacts SET status = ? WHERE id = ?");
+        $stmt->execute([$status, $contactId]);
+        
+        if ($stmt->rowCount() > 0) {
+            echo json_encode(['success' => true, 'message' => 'Contact status updated successfully']);
+        } else {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Contact not found']);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to update contact status']);
     }
-    
-    $stmt->close();
 }
 
 function getCategories() {

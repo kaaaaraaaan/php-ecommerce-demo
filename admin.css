@@ -27,10 +27,46 @@ body {
 .header h1 {
     font-size: 2rem;
     font-weight: 700;
-    background: linear-gradient(45deg, #fff, #e0e7ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+}
+
+.header h1 a.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+}
+
+.logo-img {
+    max-height: 56px;
+    width: auto;
+    margin-right: 10px;
+}
+
+/* Responsive logo adjustments for admin panel */
+@media (max-width: 768px) {
+    .logo-img {
+        max-height: 46px;
+        margin-right: 8px;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-img {
+        max-height: 38px;
+        margin-right: 6px;
+    }
+    
+    .header h1 {
+        font-size: 1.2rem;
+    }
+    
+    .header {
+        padding: 1rem;
+    }
 }
 
 .logout-btn {

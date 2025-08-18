@@ -275,13 +275,14 @@ function updateCategory() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - ProTechMate</title>
+    <link rel="icon" type="image/png" href="uploads/icons8-cart-100.png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
     <div class="header">
-        <h1><a href="index.html" style="text-decoration: none; background: linear-gradient(45deg, #fff, #e0e7ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">ProTechMate Admin</a></h1>
+        <h1><a href="index.html" class="logo"><img src="uploads/ProTechMate (1000 x 500 px).png" alt="ProTechMate Logo" class="logo-img"></a></h1>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
