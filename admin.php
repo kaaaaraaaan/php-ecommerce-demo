@@ -277,11 +277,11 @@ function updateCategory() {
             <button class="tab-btn" onclick="switchTab('categories')">
                 <i class="fas fa-tags"></i> Category Management
             </button>
-            <button class="tab-btn" onclick="switchTab('users')">
-                <i class="fas fa-users"></i> User Management
-            </button>
             <button class="tab-btn" onclick="switchTab('contacts')">
                 <i class="fas fa-envelope"></i> Contact Messages
+            </button>
+            <button class="tab-btn" onclick="switchTab('users')">
+                <i class="fas fa-users"></i> Users
             </button>
         </div>
 
@@ -332,7 +332,86 @@ function updateCategory() {
                 </div>
             </div>
         </div>
-
+        
+        <!-- Users Tab -->
+        <div class="tab-content" id="users-tab" style="display: none;">
+            <div class="card">
+                <h2><i class="fas fa-users"></i> Users</h2>
+                <div class="users-table-container">
+                    <table class="users-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Admin</th>
+                                <th>Joined</th>
+                                <th>Total Orders</th>
+                                <th>Total Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contacts Tab -->
+        <div class="tab-content" id="contacts-tab" style="display: none;">
+            <div class="card">
+                <h2><i class="fas fa-envelope"></i> Contact Messages</h2>
+                <div class="contacts-section">
+                    <div class="contacts-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalContacts">0</div>
+                            <div class="stat-label">Total Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="newContacts">0</div>
+                            <div class="stat-label">New Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="repliedContacts">0</div>
+                            <div class="stat-label">Replied Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="archivedContacts">0</div>
+                            <div class="stat-label">Archived Messages</div>
+                        </div>
+                    </div>
+                    <div class="contacts-filter">
+                        <select id="contactStatusFilter" onchange="loadContacts(this.value)">
+                            <option value="">All Messages</option>
+                            <option value="new">New Messages</option>
+                            <option value="read">Read Messages</option>
+                            <option value="replied">Replied Messages</option>
+                            <option value="archived">Archived Messages</option>
+                        </select>
+                    </div>
+                    <div class="contacts-table-container">
+                        <table class="contacts-table" id="contactsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Subject</th>
+                                    <th>Message</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contactsTableBody">
+                                <!-- Contact messages will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Categories Tab -->
         <div class="tab-content" id="categories-tab" style="display: none;">
             <div class="card">
@@ -398,102 +477,6 @@ function updateCategory() {
             </div>
         </div>
 
-        <!-- Users Tab -->
-        <div class="tab-content" id="users-tab" style="display: none;">
-            <div class="card">
-                <h2><i class="fas fa-users"></i> User Management</h2>
-                <div class="users-section">
-                    <div class="users-stats">
-                        <div class="stat-card">
-                            <div class="stat-number" id="totalUsers">0</div>
-                            <div class="stat-label">Total Users</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="adminUsers">0</div>
-                            <div class="stat-label">Administrators</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="activeUsers">0</div>
-                            <div class="stat-label">Active Customers</div>
-                        </div>
-                    </div>
-                    <div class="users-table-container">
-                        <table class="users-table" id="usersTable">
-                            <thead>
-                                <tr>
-                                    <th>User ID</th>
-                                    <th>Username</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Orders</th>
-                                    <th>Total Spent</th>
-                                    <th>Joined</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <!-- Users will be loaded here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Contacts Tab -->
-        <div class="tab-content" id="contacts-tab" style="display: none;">
-            <div class="card">
-                <h2><i class="fas fa-envelope"></i> Contact Messages</h2>
-                <div class="contacts-section">
-                    <div class="contacts-stats">
-                        <div class="stat-card">
-                            <div class="stat-number" id="totalContacts">0</div>
-                            <div class="stat-label">Total Messages</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="newContacts">0</div>
-                            <div class="stat-label">New Messages</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="repliedContacts">0</div>
-                            <div class="stat-label">Replied Messages</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="archivedContacts">0</div>
-                            <div class="stat-label">Archived Messages</div>
-                        </div>
-                    </div>
-                    <div class="contacts-filter">
-                        <select id="contactStatusFilter" onchange="loadContacts(this.value)">
-                            <option value="">All Messages</option>
-                            <option value="new">New Messages</option>
-                            <option value="read">Read Messages</option>
-                            <option value="replied">Replied Messages</option>
-                            <option value="archived">Archived Messages</option>
-                        </select>
-                    </div>
-                    <div class="contacts-table-container">
-                        <table class="contacts-table" id="contactsTable">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Subject</th>
-                                    <th>Message</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="contactsTableBody">
-                                <!-- Contact messages will be loaded here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Edit Product Modal -->

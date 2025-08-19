@@ -19,8 +19,8 @@ function switchTab(tabName) {
         case 'products': loadProducts(); break;
         case 'categories': loadCategoriesForManagement(); break;
         case 'orders': loadOrders(); break;
-        case 'users': loadUsers(); break;
         case 'contacts': loadContacts(); break;
+        case 'users': loadUsers(); break;
     }
 }
 
@@ -312,126 +312,57 @@ async function updateOrderStatus(orderId, newStatus) {
     }
 }
 
-// User Management
-async function loadUsers() {
-    try {
-        const response = await fetch('api.php?action=users');
-        const users = await response.json();
-        
-        if (response.ok) {
-            displayUsers(users);
-            updateUserStats(users);
-        } else {
-            showAlert('Failed to load users: ' + users.error, 'error');
-        }
-    } catch (error) {
-        showAlert('Error loading users: ' + error.message, 'error');
-    }
+// Users Management
+function loadUsers() {
+    const tbody = document.getElementById('usersTableBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:1rem; color:#666;">Loading...</td></tr>';
+    fetch('api.php?action=users')
+        .then(res => res.json())
+        .then(users => {
+            displayUsers(users || []);
+        })
+        .catch(err => {
+            showError('Failed to load users: ' + err.message);
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:1rem; color:#c00;">Failed to load users</td></tr>';
+        });
 }
 
 function displayUsers(users) {
     const tbody = document.getElementById('usersTableBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
-    
-    if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #666;">No users found</td></tr>';
+    if (!Array.isArray(users) || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:2rem; color:#666;">No users found</td></tr>';
         return;
     }
-    
-    users.forEach(user => {
-        const row = document.createElement('tr');
-        const joinDate = new Date(user.created_at).toLocaleDateString();
-        const roleClass = user.is_admin == 1 ? 'role-admin' : 'role-user';
-        const roleName = user.is_admin == 1 ? 'Admin' : 'User';
-        
-        row.innerHTML = `
-            <td><strong>#${user.id}</strong></td>
-            <td>${user.username}</td>
-            <td>${user.email}</td>
-            <td><span class="role-badge ${roleClass}">${roleName}</span></td>
-            <td>${user.total_orders}</td>
-            <td>$${parseFloat(user.total_spent).toFixed(2)}</td>
-            <td>${joinDate}</td>
-            <td>
-                <select class="role-select" onchange="updateUserRole(${user.id}, this.value)">
-                    <option value="0" ${user.is_admin == 0 ? 'selected' : ''}>User</option>
-                    <option value="1" ${user.is_admin == 1 ? 'selected' : ''}>Admin</option>
-                </select>
-                <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id}, '${user.username}')" 
-                        style="margin-left: 0.5rem; padding: 0.25rem 0.5rem;">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
+    users.forEach(u => {
+        const tr = document.createElement('tr');
+        const joined = u.created_at ? new Date(u.created_at).toLocaleString() : '';
+        const totalSpent = (u.total_spent !== undefined && u.total_spent !== null) ? parseFloat(u.total_spent).toFixed(2) : '0.00';
+        tr.innerHTML = `
+            <td><strong>#${u.id}</strong></td>
+            <td>${u.username || ''}</td>
+            <td><a href="mailto:${u.email}">${u.email || ''}</a></td>
+            <td>${u.is_admin ? '<span class="status-badge status-replied">Yes</span>' : '<span class="status-badge status-archived">No</span>'}</td>
+            <td>${joined}</td>
+            <td>${u.total_orders || 0}</td>
+            <td>$${totalSpent}</td>
         `;
-        tbody.appendChild(row);
+        tbody.appendChild(tr);
     });
-}
-
-function updateUserStats(users) {
-    const totalUsers = users.length;
-    const adminUsers = users.filter(user => user.is_admin == 1).length;
-    const activeUsers = users.filter(user => user.total_orders > 0).length;
-    
-    document.getElementById('totalUsers').textContent = totalUsers;
-    document.getElementById('adminUsers').textContent = adminUsers;
-    document.getElementById('activeUsers').textContent = activeUsers;
-}
-
-async function updateUserRole(userId, isAdmin) {
-    try {
-        const response = await fetch('api.php?action=users', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, is_admin: isAdmin == 1 })
-        });
-        
-        const result = await response.json();
-        if (response.ok) {
-            showAlert('User role updated successfully!', 'success');
-            loadUsers();
-        } else {
-            showAlert('Failed to update user role: ' + result.error, 'error');
-            loadUsers();
-        }
-    } catch (error) {
-        showAlert('Error updating user role: ' + error.message, 'error');
-        loadUsers();
-    }
-}
-
-async function deleteUser(userId, username) {
-    if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) return;
-    
-    try {
-        const response = await fetch('api.php?action=users', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId })
-        });
-        
-        const result = await response.json();
-        if (response.ok) {
-            showAlert('User deleted successfully!', 'success');
-            loadUsers();
-        } else {
-            showAlert('Failed to delete user: ' + result.error, 'error');
-        }
-    } catch (error) {
-        showAlert('Error deleting user: ' + error.message, 'error');
-    }
 }
 
 // Contact Management
 function loadContacts(status = '') {
     showLoading();
-    const url = status ? `api.php?action=contact&status=${status}` : 'api.php?action=contact';
+    const url = status ? `api.php?action=contact&status=${encodeURIComponent(status)}` : 'api.php?action=contact';
     
     fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                displayContacts(data.contacts);
-                updateContactStats(data.stats);
+                displayContacts(data.contacts || []);
+                updateContactStats(data.stats || {});
             } else {
                 showError(data.message || 'Failed to load contacts');
             }
@@ -445,26 +376,27 @@ function loadContacts(status = '') {
 
 function displayContacts(contacts) {
     const tbody = document.getElementById('contactsTableBody');
+    if (!tbody) return; // Tab may not exist in DOM yet
     tbody.innerHTML = '';
     
-    if (contacts.length === 0) {
+    if (!contacts || contacts.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem; color: #666;">No contact messages found</td></tr>';
         return;
     }
     
     contacts.forEach(contact => {
         const row = document.createElement('tr');
-        const date = new Date(contact.created_at).toLocaleString();
+        const date = contact.created_at ? new Date(contact.created_at).toLocaleString() : '';
         const statusClass = getStatusClass(contact.status);
-        const truncatedMessage = contact.message.length > 100 ? 
-            contact.message.substring(0, 100) + '...' : contact.message;
+        const fullMessage = contact.message || '';
+        const truncatedMessage = fullMessage.length > 100 ? fullMessage.substring(0, 100) + '...' : fullMessage;
         
         row.innerHTML = `
             <td><strong>#${contact.id}</strong></td>
-            <td>${contact.name}</td>
-            <td><a href="mailto:${contact.email}">${contact.email}</a></td>
-            <td>${contact.subject}</td>
-            <td title="${contact.message}">${truncatedMessage}</td>
+            <td>${contact.name || ''}</td>
+            <td>${contact.email ? `<a href="mailto:${contact.email}">${contact.email}</a>` : ''}</td>
+            <td>${contact.subject || ''}</td>
+            <td title="${fullMessage.replace(/"/g, '&quot;')}">${truncatedMessage}</td>
             <td>${date}</td>
             <td><span class="status-badge ${statusClass}">${contact.status}</span></td>
             <td>
@@ -481,44 +413,47 @@ function displayContacts(contacts) {
 }
 
 function updateContactStats(stats) {
-    document.getElementById('totalContacts').textContent = stats.total || 0;
-    document.getElementById('newContacts').textContent = stats.new || 0;
-    document.getElementById('repliedContacts').textContent = stats.replied || 0;
-    document.getElementById('archivedContacts').textContent = stats.archived || 0;
+    const totalEl = document.getElementById('totalContacts');
+    const newEl = document.getElementById('newContacts');
+    const repliedEl = document.getElementById('repliedContacts');
+    const archivedEl = document.getElementById('archivedContacts');
+    if (totalEl) totalEl.textContent = stats.total || 0;
+    if (newEl) newEl.textContent = stats.new || 0;
+    if (repliedEl) repliedEl.textContent = stats.replied || 0;
+    if (archivedEl) archivedEl.textContent = stats.archived || 0;
 }
 
 function getStatusClass(status) {
-    const statusMap = {
-        'new': 'status-new',
-        'read': 'status-read', 
-        'replied': 'status-replied',
-        'archived': 'status-archived'
+    const map = {
+        new: 'status-new',
+        read: 'status-read',
+        replied: 'status-replied',
+        archived: 'status-archived'
     };
-    return statusMap[status] || '';
+    return map[status] || '';
 }
 
-function updateContactStatus(contactId, status) {
+async function updateContactStatus(contactId, status) {
     showLoading();
-    
-    fetch('api.php?action=contact', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `contact_id=${contactId}&status=${status}`
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+        const response = await fetch('api.php?action=contact', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact_id: contactId, status })
+        });
+        const data = await response.json();
         if (data.success) {
             showSuccess(data.message || 'Contact status updated');
-            loadContacts(document.getElementById('contactStatusFilter').value);
+            const filter = document.getElementById('contactStatusFilter');
+            loadContacts(filter ? filter.value : '');
         } else {
             showError(data.message || 'Failed to update contact status');
-            hideLoading();
         }
-    })
-    .catch(error => {
+    } catch (error) {
         showError('Error updating contact status: ' + error.message);
+    } finally {
         hideLoading();
-    });
+    }
 }
 
 // Event Listeners
@@ -528,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Product form submission
     document.getElementById('productForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    // ... (rest of the code remains the same)
         const formData = new FormData(e.target);
         
         try {
