@@ -198,6 +198,25 @@
             .contact-grid {
                 grid-template-columns: 1fr;
             }
+            .contact-section { padding: 1.5rem 0; }
+            .contact-container { padding: 1.25rem; }
+            .contact-info, .contact-form { padding: 1rem; }
+            .contact-info-item { margin-bottom: 1rem; }
+            .contact-header h1 { font-size: 2rem; }
+            .submit-btn { width: 100%; padding: 0.9rem 1rem; }
+        }
+
+        /* Small phones */
+        @media (max-width: 480px) {
+            .contact-section { padding: 1rem 0; }
+            .contact-container { padding: 1rem; border-radius: 16px; }
+            .contact-header { margin-bottom: 1.25rem; }
+            .contact-header h1 { font-size: 1.75rem; }
+            .contact-info h3, .contact-form h3 { font-size: 1.25rem; }
+            .form-group { margin-bottom: 1rem; }
+            .form-group label { font-size: 0.95rem; }
+            .form-group input, .form-group textarea { padding: 0.65rem; }
+            .contact-info-item i { font-size: 1.25rem; width: 26px; margin-right: 0.75rem; }
         }
     </style>
 </head>

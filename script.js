@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadCategories();
     await loadProducts();
     initializeStatsAnimation();
+    initMobileNav();
 });
 
 // Check if user is logged in
@@ -399,3 +400,72 @@ function scrollToCategories() {
 }
 
 // Modal handling removed - now using separate pages
+
+// Initialize mobile navigation (hamburger menu)
+function initMobileNav() {
+    const nav = document.querySelector('.nav');
+    const navLinks = nav ? nav.querySelector('.nav-links') : null;
+    if (!nav || !navLinks) return; // Not present on this page
+
+    // Ensure nav-links has an id for aria-controls
+    if (!navLinks.id) navLinks.id = 'primary-navigation';
+
+    // Avoid duplicate hamburger
+    if (nav.querySelector('.hamburger')) return;
+
+    // Create hamburger button
+    const btn = document.createElement('button');
+    btn.className = 'hamburger';
+    btn.setAttribute('aria-label', 'Toggle navigation');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute('aria-controls', navLinks.id);
+    btn.innerHTML = '<span></span><span></span><span></span>';
+
+    // Insert button right before nav-links
+    nav.insertBefore(btn, navLinks);
+
+    const closeMenu = () => {
+        nav.classList.remove('mobile-open');
+        btn.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+    };
+
+    const openMenu = () => {
+        nav.classList.add('mobile-open');
+        btn.classList.add('active');
+        btn.setAttribute('aria-expanded', 'true');
+    };
+
+    // Toggle on click
+    btn.addEventListener('click', () => {
+        if (nav.classList.contains('mobile-open')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+
+    // Close when clicking a nav link (use event delegation)
+    navLinks.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target && (target.tagName === 'A' || target.closest('a'))) {
+            closeMenu();
+        }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && nav.classList.contains('mobile-open')) {
+            closeMenu();
+        }
+    });
+
+    // Reset state on resize to desktop
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+            closeMenu();
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initMobileNav);
