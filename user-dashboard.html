@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Dashboard - ProTechMate</title>
+    <link rel="icon" type="image/png" href="uploads/icons8-cart-100.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .dashboard-page { padding: 2rem 0; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 992px) { .dashboard-grid { grid-template-columns: 1fr 2fr; } }
+        .card { background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 20px; padding: 1.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); }
+        .card h2 { margin: 0 0 1rem 0; font-size: 1.4rem; display: flex; align-items: center; gap: .6rem; }
+        .profile-row { display: grid; grid-template-columns: 130px 1fr; gap: 1rem; align-items: center; }
+        .avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 700; }
+        .profile-fields { display: grid; grid-template-columns: 1fr; gap: .5rem; }
+        .field { display: grid; grid-template-columns: 140px 1fr; gap: .5rem; }
+        .field label { color: #666; }
+        .orders-empty { text-align: center; padding: 2rem; color: #888; }
+        .order { border: 1px solid #eee; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; background: rgba(255,255,255,0.7); }
+        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .75rem; }
+        .status { padding: .25rem .6rem; border-radius: 999px; font-size: .85rem; background: rgba(102,126,234,.1); color: #667eea; }
+        .muted { color: #666; font-size: .95rem; }
+        .loading { text-align: center; padding: .75rem; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="index.html" class="logo"><img src="uploads/ProTechMate (1000 x 500 px).png" alt="ProTechMate Logo" class="logo-img"></a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="about.html" class="nav-link">About Us</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+                <div id="userSection" class="hidden">
+                    <span id="welcomeText"></span>
+                    <div class="cart-icon" onclick="location.href='cart.html'">
+                        🛒 <span id="cartCount" class="cart-count hidden">0</span>
+                    </div>
+                    <button class="btn" onclick="logout()">Logout</button>
+                </div>
+                <div id="guestSection">
+                    <a href="login.html" class="btn">Login</a>
+                    <a href="register.html" class="btn">Register</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container dashboard-page">
+        <div class="alert alert-success" id="successAlert"></div>
+        <div class="alert alert-error" id="errorAlert"></div>
+
+        <div class="dashboard-grid">
+            <section class="card" id="profileCard">
+                <h2><i class="fas fa-user-circle"></i> Your Profile</h2>
+                <div id="loadingProfile" class="loading">Loading profile...</div>
+                <div id="profileContent" class="hidden"></div>
+            </section>
+
+            <section class="card">
+                <div class="order-header" style="margin-bottom:1rem;">
+                    <h2 style="margin:0"><i class="fas fa-box"></i> Your Orders</h2>
+                    <a href="index.html" class="btn">Continue Shopping</a>
+                </div>
+                <div id="loadingOrders" class="loading">Loading orders...</div>
+                <div id="ordersContent"></div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div>
+            <div class="footer-grid">
+                <div>
+                    <h3>ProTechMate</h3>
+                    <p>Your premium destination for cutting-edge electronics and technology.</p>
+                </div>
+                <div>
+                    <h4>Quick Links</h4>
+                    <div class="quick-links">
+                        <a href="about.html">About Us</a>
+                        <a href="contact.html">Contact</a>
+                        <a href="privacy.html">Privacy Policy</a>
+                        <a href="terms.html">Terms of Service</a>
+                    </div>
+                </div>
+                <div>
+                    <h4>Follow Us</h4>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ProTechMate. All rights reserved. | Built with ❤️ for technology enthusiasts</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="user-dashboard.js"></script>
+</body>
+</html>

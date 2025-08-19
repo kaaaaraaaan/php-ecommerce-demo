@@ -6,7 +6,7 @@
     <title>Contact Us - ProTechMate</title>
     <link rel="icon" type="image/png" href="uploads/icons8-cart-100.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
         .contact-section {
@@ -211,7 +211,7 @@
                 <a href="contact.html" class="nav-link active">Contact</a>
                 <div id="userSection" class="hidden">
                     <span id="welcomeText"></span>
-                    <div class="cart-icon" onclick="openCart()">
+                    <div class="cart-icon" onclick="location.href='cart.html'">
                         🛒 <span id="cartCount" class="cart-count hidden">0</span>
                     </div>
                     <button class="btn" onclick="logout()">Logout</button>
@@ -325,6 +325,7 @@
         </div>
     </footer>
 
+    <script src="script.js"></script>
     <script>
         document.getElementById('contactForm').addEventListener('submit', function(e) {
             e.preventDefault();

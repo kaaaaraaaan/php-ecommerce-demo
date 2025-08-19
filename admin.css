@@ -448,10 +448,28 @@ body {
 }
 
 .status-select {
-    padding: 0.25rem 0.5rem;
-    border: 1px solid #ddd;
+    padding: 0.4rem 1.75rem 0.4rem 0.5rem;
+    border: 1px solid #ccc;
     border-radius: 6px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    background: #ffffff; /* Override global translucent select */
+    color: #1a1a1a;      /* Ensure text is visible on white */
+    width: auto;         /* Compact width in table cell */
+    min-width: 140px;    /* Enough room for longest label */
+    appearance: none;
+    background-image: none; /* Remove white chevrons from global rule */
+}
+
+.status-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* In orders table, keep actions cell tidy */
+.orders-table td .status-select {
+    background: #fff;
+    color: #1a1a1a;
 }
 
 /* Contact Management Styles */

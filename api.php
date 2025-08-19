@@ -85,6 +85,18 @@ switch ($request) {
         }
         break;
     
+    case 'my_profile':
+        if ($method === 'GET') {
+            getMyProfile();
+        }
+        break;
+    
+    case 'my_orders':
+        if ($method === 'GET') {
+            getMyOrders();
+        }
+        break;
+    
     case 'orders':
         if ($method === 'GET') {
             getOrders();
@@ -389,6 +401,54 @@ function getCurrentUser() {
         ]);
     } else {
         echo json_encode(['logged_in' => false]);
+    }
+}
+
+// Returns the full profile for the currently logged-in user (non-sensitive fields)
+function getMyProfile() {
+    requireLogin();
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT id, username, email, created_at, is_admin FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($user) {
+            echo json_encode(['success' => true, 'user' => $user]);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'User not found']);
+        }
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to fetch profile']);
+    }
+}
+
+// Returns orders that belong to the currently logged-in user
+function getMyOrders() {
+    requireLogin();
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare(
+            "SELECT 
+                o.id,
+                o.total_amount,
+                o.status,
+                o.created_at,
+                GROUP_CONCAT(CONCAT(p.name, ' (', oi.quantity, 'x @$', oi.price, ')') SEPARATOR ', ') as items
+             FROM orders o
+             LEFT JOIN order_items oi ON o.id = oi.order_id
+             LEFT JOIN products p ON oi.product_id = p.id
+             WHERE o.user_id = ?
+             GROUP BY o.id
+             ORDER BY o.created_at DESC"
+        );
+        $stmt->execute([$_SESSION['user_id']]);
+        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'orders' => $orders]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to fetch orders']);
     }
 }
 

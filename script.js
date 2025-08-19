@@ -47,6 +47,18 @@ function showUserSection() {
         adminLink.style.marginRight = '1rem';
         document.getElementById('userSection').insertBefore(adminLink, document.getElementById('userSection').firstChild);
     }
+
+    // Add dashboard link for all logged-in users (avoid duplicates)
+    const userSection = document.getElementById('userSection');
+    const existingDashboard = [...userSection.querySelectorAll('a')].find(a => a.getAttribute('href') === 'user-dashboard.html');
+    if (!existingDashboard) {
+        const dashboardLink = document.createElement('a');
+        dashboardLink.href = 'user-dashboard.html';
+        dashboardLink.textContent = 'My Dashboard';
+        dashboardLink.style.marginRight = '1rem';
+        const cartIcon = userSection.querySelector('.cart-icon');
+        userSection.insertBefore(dashboardLink, cartIcon || userSection.firstChild);
+    }
 }
 
 // Show guest section in navigation
