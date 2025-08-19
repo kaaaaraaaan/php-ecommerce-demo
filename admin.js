@@ -283,7 +283,10 @@ function displayOrders(orders) {
 function updateOrdersStats(orders) {
     const totalOrders = orders.length;
     const pendingOrders = orders.filter(order => order.status === 'pending').length;
-    const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
+    // Exclude cancelled orders from revenue calculation
+    const totalRevenue = orders
+        .filter(order => order.status !== 'cancelled')
+        .reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
     
     document.getElementById('totalOrders').textContent = totalOrders;
     document.getElementById('pendingOrders').textContent = pendingOrders;
