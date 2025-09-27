@@ -207,11 +207,8 @@ async function addToCart(productId) {
     }
     
     try {
-        const response = await fetch('api.php?action=cart', {
+        const response = await securityManager.secureFetch('api.php?action=cart', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({
                 product_id: productId,
                 quantity: 1
@@ -259,11 +256,8 @@ function updateCartCount() {
 
 async function removeFromCart(cartId) {
     try {
-        const response = await fetch('api.php?action=cart', {
+        const response = await securityManager.secureFetch('api.php?action=cart', {
             method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify({ cart_id: cartId })
         });
         

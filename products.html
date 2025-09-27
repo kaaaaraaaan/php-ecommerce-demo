@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products - ProTechMate</title>
+    <link rel="icon" type="image/png" href="uploads/icons8-cart-100.png">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .products-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        .products-hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .products-hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .products-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .products-filters {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filters-header h2 {
+            color: #333;
+            margin: 0;
+        }
+
+        .products-count {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .filter-select, .filter-input {
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .clear-filters {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e1e5e9;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-filters:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f8f9fa;
+        }
+
+        .product-info {
+            padding: 20px;
+        }
+
+        .product-category {
+            color: #667eea;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-price {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .product-stock {
+            font-size: 0.8rem;
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .product-stock.low-stock {
+            color: #ffc107;
+        }
+
+        .product-stock.out-of-stock {
+            color: #dc3545;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-view, .btn-cart {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-view {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-view:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .btn-cart {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-cart:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-cart:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-products {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .no-products i {
+            font-size: 4rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .no-products h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .products-hero h1 {
+                font-size: 2rem;
+            }
+
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="index.html">
+                    <img src="uploads/ProTechMate (1000 x 500 px).png" alt="ProTechMate" class="logo">
+                </a>
+            </div>
+            
+            <nav class="nav-menu" id="navMenu">
+                <a href="index.html">Home</a>
+                <a href="products.html" class="active">Products</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
+            
+            <div class="nav-actions">
+                <div id="guestSection" class="auth-buttons">
+                    <a href="login.html" class="btn-login">Login</a>
+                    <a href="register.html" class="btn-register">Sign Up</a>
+                </div>
+                
+                <div id="userSection" class="user-section hidden">
+                    <span id="welcomeText">Welcome!</span>
+                    <a href="cart.html" class="cart-link">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count hidden" id="cartCount">0</span>
+                    </a>
+                    <a href="user-dashboard.html" class="user-dashboard">Dashboard</a>
+                    <button onclick="logout()" class="btn-logout">Logout</button>
+                </div>
+                
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="products-hero">
+        <div class="container">
+            <h1>Our Products</h1>
+            <p>Discover our complete collection of premium tech products, carefully curated for technology enthusiasts and professionals.</p>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-container">
+        <!-- Filters -->
+        <div class="products-filters">
+            <div class="filters-header">
+                <h2><i class="fas fa-filter"></i> Filter Products</h2>
+                <div class="products-count" id="productsCount">Loading products...</div>
+            </div>
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label for="categoryFilter">Category</label>
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="priceFilter">Max Price</label>
+                    <input type="number" id="priceFilter" class="filter-input" placeholder="Enter max price" min="0" step="0.01">
+                </div>
+                <div class="filter-group">
+                    <label for="searchFilter">Search</label>
+                    <input type="text" id="searchFilter" class="filter-input" placeholder="Search products...">
+                </div>
+                <div class="filter-group">
+                    <label>&nbsp;</label>
+                    <button class="clear-filters" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <p>Loading products...</p>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-grid" id="productsGrid">
+            <!-- Products will be loaded here -->
+        </div>
+
+        <!-- No Products Message -->
+        <div class="no-products hidden" id="noProducts">
+            <i class="fas fa-box-open"></i>
+            <h3>No Products Found</h3>
+            <p>Try adjusting your filters or check back later for new products.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ProTechMate</h3>
+                    <p>Your trusted partner for premium technology products. We bring you the latest innovations in tech.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ProTechMate. All rights reserved. | Built with ❤️ for technology enthusiasts</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="security.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Global variables for products page
+        let allProducts = [];
+        let filteredProducts = [];
+        let categories = [];
+
+        // Initialize products page
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkUserStatus();
+            await loadCategoriesForFilter();
+            await loadAllProducts();
+            setupFilterListeners();
+        });
+
+        // Load categories for filter dropdown
+        async function loadCategoriesForFilter() {
+            try {
+                const response = await fetch('api.php?action=categories');
+                categories = await response.json();
+                
+                const categorySelect = document.getElementById('categoryFilter');
+                categorySelect.innerHTML = '<option value="">All Categories</option>';
+                
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        // Load all products
+        async function loadAllProducts() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const productsGrid = document.getElementById('productsGrid');
+            
+            try {
+                loadingSpinner.style.display = 'block';
+                productsGrid.innerHTML = '';
+                
+                const response = await fetch('api.php?action=products');
+                allProducts = await response.json();
+                filteredProducts = [...allProducts];
+                
+                displayProducts();
+                updateProductsCount();
+            } catch (error) {
+                console.error('Error loading products:', error);
+                showError('Failed to load products');
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Display products in grid
+        function displayProducts() {
+            const productsGrid = document.getElementById('productsGrid');
+            const noProducts = document.getElementById('noProducts');
+            
+            if (filteredProducts.length === 0) {
+                productsGrid.innerHTML = '';
+                noProducts.classList.remove('hidden');
+                return;
+            }
+            
+            noProducts.classList.add('hidden');
+            productsGrid.innerHTML = '';
+            
+            filteredProducts.forEach(product => {
+                const productCard = createProductCard(product);
+                productsGrid.appendChild(productCard);
+            });
+        }
+
+        // Create product card element
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.onclick = () => window.location.href = `product.html?id=${product.id}`;
+            
+            const stockClass = product.stock_quantity <= 0 ? 'out-of-stock' : 
+                              product.stock_quantity <= 5 ? 'low-stock' : '';
+            
+            const stockText = product.stock_quantity <= 0 ? 'Out of Stock' :
+                             product.stock_quantity <= 5 ? `Only ${product.stock_quantity} left` :
+                             `${product.stock_quantity} in stock`;
+            
+            card.innerHTML = `
+                <img src="${product.image_url || 'https://via.placeholder.com/280x200?text=No+Image'}" 
+                     alt="${product.name}" class="product-image" 
+                     onerror="this.src='https://via.placeholder.com/280x200?text=No+Image'">
+                <div class="product-info">
+                    <div class="product-category">${product.category_name || 'Uncategorized'}</div>
+                    <h3 class="product-name">${product.name}</h3>
+                    <p class="product-description">${product.description || 'No description available'}</p>
+                    <div class="product-footer">
+                        <div class="product-price">$${parseFloat(product.price).toFixed(2)}</div>
+                        <div class="product-stock ${stockClass}">${stockText}</div>
+                    </div>
+                    <div class="product-actions">
+                        <a href="product.html?id=${product.id}" class="btn-view" onclick="event.stopPropagation()">
+                            <i class="fas fa-eye"></i> View Details
+                        </a>
+                        <button class="btn-cart" onclick="event.stopPropagation(); addToCart(${product.id})" 
+                                ${product.stock_quantity <= 0 ? 'disabled' : ''}>
+                            <i class="fas fa-shopping-cart"></i> 
+                            ${product.stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // Setup filter event listeners
+        function setupFilterListeners() {
+            document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+            document.getElementById('priceFilter').addEventListener('input', debounce(applyFilters, 500));
+            document.getElementById('searchFilter').addEventListener('input', debounce(applyFilters, 300));
+        }
+
+        // Apply filters to products
+        function applyFilters() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const priceFilter = document.getElementById('priceFilter').value;
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+            
+            filteredProducts = allProducts.filter(product => {
+                // Category filter
+                if (categoryFilter && product.category_id != categoryFilter) {
+                    return false;
+                }
+                
+                // Price filter
+                if (priceFilter && parseFloat(product.price) > parseFloat(priceFilter)) {
+                    return false;
+                }
+                
+                // Search filter
+                if (searchFilter && !product.name.toLowerCase().includes(searchFilter) && 
+                    !product.description.toLowerCase().includes(searchFilter)) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            displayProducts();
+            updateProductsCount();
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('priceFilter').value = '';
+            document.getElementById('searchFilter').value = '';
+            
+            filteredProducts = [...allProducts];
+            displayProducts();
+            updateProductsCount();
+        }
+
+        // Update products count display
+        function updateProductsCount() {
+            const count = filteredProducts.length;
+            const total = allProducts.length;
+            const countElement = document.getElementById('productsCount');
+            
+            if (count === total) {
+                countElement.textContent = `Showing all ${total} products`;
+            } else {
+                countElement.textContent = `Showing ${count} of ${total} products`;
+            }
+        }
+
+        // Debounce function for search input
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                await securityManager.secureFetch('api.php?action=logout', { method: 'POST' });
+                window.location.href = 'index.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            // You can implement a toast notification or alert here
+            console.error(message);
+        }
+    </script>
+</body>
+</html>

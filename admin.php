@@ -8,14 +8,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
     switch ($_GET['action']) {
         case 'add_product':
             requireAdmin();
+            requireCSRFToken();
             addProduct();
             break;
         case 'delete_product':
             requireAdmin();
+            requireCSRFToken();
             deleteProduct();
             break;
         case 'update_product':
             requireAdmin();
+            requireCSRFToken();
             updateProduct();
             break;
         case 'get_products':
@@ -24,14 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action'])) {
             break;
         case 'add_category':
             requireAdmin();
+            requireCSRFToken();
             addCategory();
             break;
         case 'delete_category':
             requireAdmin();
+            requireCSRFToken();
             deleteCategory();
             break;
         case 'update_category':
             requireAdmin();
+            requireCSRFToken();
             updateCategory();
             break;
     }
@@ -83,13 +89,31 @@ function addProduct() {
         $imageUrl = handleFileUpload('product_image');
         $categoryId = !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null;
         
+        // Sanitize inputs
+        $name = sanitizeInput($_POST['name']);
+        $description = sanitizeInput($_POST['description'] ?? '');
+        $price = filter_var($_POST['price'], FILTER_VALIDATE_FLOAT);
+        $stockQuantity = filter_var($_POST['stock_quantity'] ?? 0, FILTER_VALIDATE_INT);
+        
+        if ($price === false || $price < 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid price']);
+            return;
+        }
+        
+        if ($stockQuantity === false || $stockQuantity < 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid stock quantity']);
+            return;
+        }
+        
         $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image_url, stock_quantity, category_id) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([
-            $_POST['name'],
-            $_POST['description'] ?? '',
-            $_POST['price'],
+            $name,
+            $description,
+            $price,
             $imageUrl,
-            $_POST['stock_quantity'] ?? 0,
+            $stockQuantity,
             $categoryId
         ]);
         
@@ -547,6 +571,7 @@ function updateCategory() {
         </div>
     </div>
 
+    <script src="security.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

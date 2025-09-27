@@ -85,6 +85,12 @@ switch ($request) {
         }
         break;
     
+    case 'get_csrf_token':
+        if ($method === 'GET') {
+            getCSRFToken();
+        }
+        break;
+    
     case 'my_profile':
         if ($method === 'GET') {
             getMyProfile();
@@ -187,6 +193,10 @@ function getProduct() {
 
 function login() {
     global $pdo;
+    
+    // Rate limiting for login attempts
+    checkRateLimit('login', 5, 900); // 5 attempts per 15 minutes
+    
     $data = json_decode(file_get_contents('php://input'), true);
     
     if (!isset($data['username']) || !isset($data['password'])) {
@@ -197,7 +207,7 @@ function login() {
     
     try {
         $stmt = $pdo->prepare("SELECT id, username, password, is_admin FROM users WHERE username = ? OR email = ?");
-        $stmt->execute([$data['username'], $data['username']]);
+        $stmt->execute([sanitizeInput($data['username']), sanitizeInput($data['username'])]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Check if password matches - either with password_verify or direct comparison for admin
@@ -205,6 +215,9 @@ function login() {
                           ($user['username'] === 'admin' && $data['password'] === $user['password']);
         
         if ($user && $passwordMatches) {
+            // Regenerate session ID for security
+            regenerateSession();
+            
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['is_admin'] = $user['is_admin'];
@@ -213,9 +226,10 @@ function login() {
                 'success' => true,
                 'user' => [
                     'id' => $user['id'],
-                    'username' => $user['username'],
+                    'username' => escape($user['username']),
                     'is_admin' => $user['is_admin']
-                ]
+                ],
+                'csrf_token' => generateCSRFToken()
             ]);
         } else {
             http_response_code(401);
@@ -229,6 +243,10 @@ function login() {
 
 function register() {
     global $pdo;
+    
+    // Rate limiting for registration attempts
+    checkRateLimit('register', 3, 3600); // 3 attempts per hour
+    
     $data = json_decode(file_get_contents('php://input'), true);
     
     if (!isset($data['username']) || !isset($data['email']) || !isset($data['password'])) {
@@ -237,10 +255,26 @@ function register() {
         return;
     }
     
+    // Validate input
+    $username = sanitizeInput($data['username']);
+    $email = filter_var($data['email'], FILTER_SANITIZE_EMAIL);
+    
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid email address']);
+        return;
+    }
+    
+    if (strlen($data['password']) < 8) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Password must be at least 8 characters long']);
+        return;
+    }
+    
     try {
         $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-        $stmt->execute([$data['username'], $data['email'], $hashedPassword]);
+        $stmt->execute([$username, $email, $hashedPassword]);
         
         echo json_encode(['success' => true, 'message' => 'User registered successfully']);
     } catch (PDOException $e) {
@@ -255,12 +289,13 @@ function register() {
 }
 
 function logout() {
-    session_destroy();
+    destroySession();
     echo json_encode(['success' => true]);
 }
 
 function addToCart() {
     requireLogin();
+    requireCSRFToken();
     global $pdo;
     $data = json_decode(file_get_contents('php://input'), true);
     
@@ -316,6 +351,7 @@ function getCart() {
 
 function removeFromCart() {
     requireLogin();
+    requireCSRFToken();
     global $pdo;
     $data = json_decode(file_get_contents('php://input'), true);
     
@@ -338,6 +374,7 @@ function removeFromCart() {
 
 function checkout() {
     requireLogin();
+    requireCSRFToken();
     global $pdo;
     
     try {
@@ -395,13 +432,20 @@ function getCurrentUser() {
             'logged_in' => true,
             'user' => [
                 'id' => $_SESSION['user_id'],
-                'username' => $_SESSION['username'],
+                'username' => escape($_SESSION['username']),
                 'is_admin' => $_SESSION['is_admin'] ?? false
-            ]
+            ],
+            'csrf_token' => generateCSRFToken()
         ]);
     } else {
         echo json_encode(['logged_in' => false]);
     }
+}
+
+function getCSRFToken() {
+    echo json_encode([
+        'csrf_token' => generateCSRFToken()
+    ]);
 }
 
 // Returns the full profile for the currently logged-in user (non-sensitive fields)
@@ -625,6 +669,9 @@ function updateUserRole() {
 function submitContact() {
     global $pdo;
     
+    // Rate limiting for contact form submissions
+    checkRateLimit('contact', 3, 3600); // 3 submissions per hour
+    
     // Validate required fields
     if (!isset($_POST['name']) || !isset($_POST['email']) || !isset($_POST['subject']) || !isset($_POST['message'])) {
         http_response_code(400);
@@ -632,16 +679,23 @@ function submitContact() {
         return;
     }
     
-    // Sanitize inputs
-    $name = htmlspecialchars(trim($_POST['name']));
+    // Sanitize inputs using our enhanced function
+    $name = sanitizeInput($_POST['name']);
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-    $subject = htmlspecialchars(trim($_POST['subject']));
-    $message = htmlspecialchars(trim($_POST['message']));
+    $subject = sanitizeInput($_POST['subject']);
+    $message = sanitizeInput($_POST['message']);
     
     // Validate email
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid email address']);
+        return;
+    }
+    
+    // Validate input lengths
+    if (strlen($name) > 100 || strlen($subject) > 200 || strlen($message) > 2000) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Input too long']);
         return;
     }
     

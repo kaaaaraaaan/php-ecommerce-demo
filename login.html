@@ -314,6 +314,7 @@
         </div>
     </div>
 
+    <script src="security.js"></script>
     <script>
         // Login form submission
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -341,6 +342,10 @@
                 const result = await response.json();
                 
                 if (result.success) {
+                    // Store CSRF token if provided
+                    if (result.csrf_token) {
+                        securityManager.csrfToken = result.csrf_token;
+                    }
                     showAlert('Login successful! Redirecting...', 'success');
                     setTimeout(() => {
                         if (result.user.is_admin) {

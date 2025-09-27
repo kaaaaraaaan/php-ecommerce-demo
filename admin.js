@@ -37,9 +37,14 @@ function showError(message) { showAlert(message, 'error'); }
 function showLoading() { /* Add loading indicator if needed */ }
 function hideLoading() { /* Hide loading indicator if needed */ }
 
-function logout() {
-    fetch('api.php?action=logout', { method: 'POST' })
-        .then(() => window.location.href = 'index.html');
+async function logout() {
+    try {
+        await securityManager.secureFetch('api.php?action=logout', { method: 'POST' });
+        window.location.href = 'index.html';
+    } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = 'index.html'; // Redirect anyway
+    }
 }
 
 // Product Management
@@ -466,14 +471,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Product form submission
     document.getElementById('productForm').addEventListener('submit', async (e) => {
-    // ... (rest of the code remains the same)
+        e.preventDefault();
         const formData = new FormData(e.target);
         
         try {
-            const response = await fetch('admin.php?action=add_product', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await securityManager.secureFormSubmit(e.target, 'admin.php?action=add_product');
             
             const result = await response.json();
             if (result.success) {
@@ -509,35 +511,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Edit product form submission
-    document.getElementById('updateProductBtn').addEventListener('click', function(e) {
+    document.getElementById('updateProductBtn').addEventListener('click', async function(e) {
         e.preventDefault();
         const form = document.getElementById('editProductForm');
-        const formData = new FormData(form);
         
         this.disabled = true;
         this.innerHTML = 'Updating...';
         
-        fetch('admin.php?action=update_product', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(result => {
+        try {
+            const response = await securityManager.secureFormSubmit(form, 'admin.php?action=update_product');
+            const result = await response.json();
+            
             if (result.success) {
                 showAlert('Product updated successfully!', 'success');
                 closeEditModal();
                 loadProducts();
             } else {
                 showAlert(result.error || 'Failed to update product', 'error');
-                this.disabled = false;
-                this.innerHTML = 'Update Product';
             }
-        })
-        .catch(error => {
+        } catch (error) {
             showAlert('Error updating product: ' + error.message, 'error');
+        } finally {
             this.disabled = false;
             this.innerHTML = 'Update Product';
-        });
+        }
     });
     
     // Image preview for edit product
@@ -562,10 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(e.target);
         
         try {
-            const response = await fetch('admin.php?action=add_category', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await securityManager.secureFormSubmit(e.target, 'admin.php?action=add_category');
             
             const result = await response.json();
             if (result.success) {
@@ -587,10 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(e.target);
         
         try {
-            const response = await fetch('admin.php?action=update_category', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await securityManager.secureFormSubmit(e.target, 'admin.php?action=update_category');
             
             const result = await response.json();
             if (result.success) {
