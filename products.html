@@ -11,7 +11,7 @@
     <style>
         .products-hero {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            color: black;
             padding: 80px 0 60px;
             text-align: center;
         }
@@ -302,43 +302,27 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
-        <div class="container">
-            <div class="nav-brand">
-                <a href="index.html">
-                    <img src="uploads/ProTechMate (1000 x 500 px).png" alt="ProTechMate" class="logo">
-                </a>
-            </div>
-            
-            <nav class="nav-menu" id="navMenu">
-                <a href="index.html">Home</a>
-                <a href="products.html" class="active">Products</a>
-                <a href="about.html">About</a>
-                <a href="contact.html">Contact</a>
-            </nav>
-            
-            <div class="nav-actions">
-                <div id="guestSection" class="auth-buttons">
-                    <a href="login.html" class="btn-login">Login</a>
-                    <a href="register.html" class="btn-register">Sign Up</a>
+        <nav class="nav">
+            <a href="index.html" class="logo"><img src="uploads/ProTechMate (1000 x 500 px).png" alt="ProTechMate Logo" class="logo-img"></a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="products.html" class="nav-link active">Products</a>
+                <a href="about.html" class="nav-link">About Us</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+                <div id="userSection" class="hidden">
+                    <span id="welcomeText"></span>
+                    <div class="cart-icon" onclick="location.href='cart.html'">
+                        🛒 <span id="cartCount" class="cart-count hidden">0</span>
+                    </div>
+                    <button class="btn" onclick="logout()">Logout</button>
                 </div>
-                
-                <div id="userSection" class="user-section hidden">
-                    <span id="welcomeText">Welcome!</span>
-                    <a href="cart.html" class="cart-link">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="cart-count hidden" id="cartCount">0</span>
-                    </a>
-                    <a href="user-dashboard.html" class="user-dashboard">Dashboard</a>
-                    <button onclick="logout()" class="btn-logout">Logout</button>
+                <div id="guestSection">
+                    <a href="login.html" class="btn">Login</a>
+                    <a href="register.html" class="btn">Register</a>
                 </div>
-                
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
-                    <i class="fas fa-bars"></i>
-                </button>
             </div>
-        </div>
+        </nav>
     </header>
 
     <!-- Hero Section -->
