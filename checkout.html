@@ -217,6 +217,17 @@
             color: #666;
             margin-bottom: 2rem;
         }
+        /* Inline validation */
+        .input-error {
+            border-color: #e74c3c !important;
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.12) !important;
+            background: rgba(255, 240, 240, 0.9) !important;
+        }
+        .field-hint {
+            font-size: 0.85rem;
+            color: #777;
+            margin-top: 0.35rem;
+        }
         .order-id {
             background: rgba(102, 126, 234, 0.1);
             padding: 0.5rem 1rem;
@@ -412,25 +423,30 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="firstName">First Name</label>
-                                        <input type="text" id="firstName" required>
+                                        <input type="text" id="firstName" required autocomplete="given-name" maxlength="50" placeholder="John" inputmode="text">
+                                        <div class="field-hint">Letters, spaces, hyphen and apostrophe only</div>
                                     </div>
                                     <div class="form-group">
                                         <label for="lastName">Last Name</label>
-                                        <input type="text" id="lastName" required>
+                                        <input type="text" id="lastName" required autocomplete="family-name" maxlength="50" placeholder="Doe" inputmode="text">
+                                        <div class="field-hint">Letters, spaces, hyphen and apostrophe only</div>
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="address">Address</label>
-                                    <input type="text" id="address" required>
+                                    <input type="text" id="address" required autocomplete="address-line1" maxlength="100" placeholder="221B Baker Street" inputmode="text">
+                                    <div class="field-hint">Letters, numbers, spaces and , . - # allowed</div>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label for="city">City</label>
-                                        <input type="text" id="city" required>
+                                        <input type="text" id="city" required autocomplete="address-level2" maxlength="60" placeholder="Kathmandu" inputmode="text">
+                                        <div class="field-hint">Letters, spaces and hyphen allowed</div>
                                     </div>
                                     <div class="form-group">
                                         <label for="postalCode">Postal Code</label>
-                                        <input type="text" id="postalCode" required>
+                                        <input type="text" id="postalCode" required autocomplete="postal-code" maxlength="10" placeholder="44600" inputmode="text">
+                                        <div class="field-hint">3–10 characters, letters/digits/hyphen/space (format check only)</div>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -455,34 +471,30 @@
                                         <i class="far fa-credit-card"></i>
                                         <div>Credit Card</div>
                                     </div>
-                                    <div class="payment-method" data-method="paypal" onclick="selectPaymentMethod(this, 'paypal')">
-                                        <i class="fab fa-paypal"></i>
-                                        <div>PayPal</div>
-                                    </div>
-                                    <div class="payment-method" data-method="bank" onclick="selectPaymentMethod(this, 'bank')">
-                                        <i class="fas fa-university"></i>
-                                        <div>Bank Transfer</div>
-                                    </div>
                                 </div>
                                 
                                 <div id="creditCardForm">
                                     <div class="form-group">
                                         <label for="cardNumber">Card Number</label>
-                                        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456">
+                                        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" inputmode="numeric" autocomplete="cc-number" maxlength="19">
+                                        <div class="field-hint">Format: 16 digits, spaces allowed (format check only)</div>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-group">
                                             <label for="expiryDate">Expiry Date</label>
-                                            <input type="text" id="expiryDate" placeholder="MM/YY">
+                                            <input type="text" id="expiryDate" placeholder="MM/YY" inputmode="numeric" autocomplete="cc-exp" maxlength="5">
+                                            <div class="field-hint">Format: MM/YY (01–12) (format check only)</div>
                                         </div>
                                         <div class="form-group">
                                             <label for="cvv">CVV</label>
-                                            <input type="text" id="cvv" placeholder="123">
+                                            <input type="text" id="cvv" placeholder="123" inputmode="numeric" autocomplete="cc-csc" maxlength="4">
+                                            <div class="field-hint">3–4 digits (format check only)</div>
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label for="cardName">Name on Card</label>
-                                        <input type="text" id="cardName">
+                                        <input type="text" id="cardName" placeholder="JOHN A DOE" autocomplete="cc-name" maxlength="60">
+                                        <div class="field-hint">Letters, spaces and hyphen allowed (format check only)</div>
                                     </div>
                                 </div>
                             </div>
@@ -539,6 +551,8 @@
             `;
             
             checkoutContent.innerHTML = html;
+            // Attach live validation listeners after rendering
+            attachValidationListeners();
         }
 
         // Show empty cart message
@@ -583,6 +597,79 @@
             creditCardForm.style.display = method === 'credit' ? 'block' : 'none';
         }
 
+        // ===== Validation helpers (format-only as requested) =====
+        function setError(el, hasError) {
+            if (!el) return;
+            if (hasError) {
+                el.classList.add('input-error');
+            } else {
+                el.classList.remove('input-error');
+            }
+        }
+
+        function validateName(v) {
+            if (!v) return false;
+            return /^[A-Za-z][A-Za-z '\-]*$/.test((v + '').trim());
+        }
+
+        function validateAddress(v) {
+            if (!v) return false;
+            const t = (v + '').trim();
+            return /^[A-Za-z0-9 ,.#\-]{5,100}$/.test(t);
+        }
+
+        function validateCity(v) {
+            if (!v) return false;
+            return /^[A-Za-z][A-Za-z \-]*$/.test((v + '').trim());
+        }
+
+        function validatePostalCode(v) {
+            if (!v) return false;
+            return /^[A-Za-z0-9 \-]{3,10}$/.test((v + '').trim());
+        }
+
+        function validateCardNumber(v) {
+            if (!v) return false;
+            const digits = (v + '').replace(/\s+/g, '');
+            return /^\d{16}$/.test(digits);
+        }
+
+        function validateExpiry(v) {
+            if (!v) return false;
+            return /^(0[1-9]|1[0-2])\/(\d{2})$/.test((v + '').trim());
+        }
+
+        function validateCVV(v) {
+            if (!v) return false;
+            return /^\d{3,4}$/.test((v + '').trim());
+        }
+
+        function validateCardName(v) {
+            if (!v) return false;
+            return /^[A-Za-z][A-Za-z \-]*$/.test((v + '').trim());
+        }
+
+        function attachValidationListeners() {
+            const map = [
+                ['firstName', validateName],
+                ['lastName', validateName],
+                ['address', validateAddress],
+                ['city', validateCity],
+                ['postalCode', validatePostalCode],
+                ['cardNumber', validateCardNumber],
+                ['expiryDate', validateExpiry],
+                ['cvv', validateCVV],
+                ['cardName', validateCardName],
+            ];
+            map.forEach(([id, fn]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const handler = () => setError(el, !fn(el.value));
+                el.addEventListener('input', handler);
+                el.addEventListener('blur', handler);
+            });
+        }
+
         // Process checkout
         async function processCheckout(event) {
             event.preventDefault();
@@ -593,6 +680,46 @@
             }
 
             try {
+                // Format validations
+                const firstNameEl = document.getElementById('firstName');
+                const lastNameEl = document.getElementById('lastName');
+                const addressEl = document.getElementById('address');
+                const cityEl = document.getElementById('city');
+                const postalEl = document.getElementById('postalCode');
+                const cardNumEl = document.getElementById('cardNumber');
+                const expEl = document.getElementById('expiryDate');
+                const cvvEl = document.getElementById('cvv');
+                const cardNameEl = document.getElementById('cardName');
+
+                const checks = [
+                    [firstNameEl, validateName, 'First name must contain only letters, spaces, hyphen or apostrophe'],
+                    [lastNameEl, validateName, 'Last name must contain only letters, spaces, hyphen or apostrophe'],
+                    [addressEl, validateAddress, 'Address contains invalid characters'],
+                    [cityEl, validateCity, 'City must contain only letters, spaces or hyphen'],
+                    [postalEl, validatePostalCode, 'Postal code format invalid (3–10 letters/digits/hyphen/space)'],
+                    [cardNumEl, validateCardNumber, 'Card number format invalid (16 digits)'],
+                    [expEl, validateExpiry, 'Expiry format must be MM/YY'],
+                    [cvvEl, validateCVV, 'CVV format invalid (3–4 digits)'],
+                    [cardNameEl, validateCardName, 'Name on card must contain only letters, spaces or hyphen'],
+                ];
+
+                let firstInvalid = null;
+                let invalidMsg = null;
+                checks.forEach(([el, fn, msg]) => {
+                    const ok = fn(el?.value || '');
+                    setError(el, !ok);
+                    if (!ok && !firstInvalid) {
+                        firstInvalid = el;
+                        invalidMsg = msg;
+                    }
+                });
+
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                    showAlert(invalidMsg, 'error');
+                    return;
+                }
+
                 // Collect form data
                 const formData = {
                     firstName: document.getElementById('firstName').value,

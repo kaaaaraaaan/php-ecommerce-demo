@@ -243,17 +243,20 @@
             document.getElementById('guestSection').classList.add('hidden');
             document.getElementById('welcomeText').textContent = `Welcome, ${currentUser.username}!`;
             
-            // Add admin link if user is admin
+            // Add admin link if user is admin (avoid duplicates)
             if (currentUser.is_admin) {
-                const adminLink = document.createElement('a');
-                adminLink.href = 'admin.php';
-                adminLink.textContent = 'Admin Panel';
-                adminLink.style.marginRight = '1rem';
-                document.getElementById('userSection').insertBefore(adminLink, document.getElementById('userSection').firstChild);
+                const userSection = document.getElementById('userSection');
+                const existingAdmin = [...userSection.querySelectorAll('a')].find(a => a.getAttribute('href') === 'admin.php');
+                if (!existingAdmin) {
+                    const adminLink = document.createElement('a');
+                    adminLink.href = 'admin.php';
+                    adminLink.textContent = 'Admin Panel';
+                    adminLink.style.marginRight = '1rem';
+                    userSection.insertBefore(adminLink, userSection.firstChild);
+                }
             }
 
             // Add dashboard link for all logged-in users (avoid duplicates)
-            const userSection = document.getElementById('userSection');
             const existingDashboard = [...userSection.querySelectorAll('a')].find(a => a.getAttribute('href') === 'user-dashboard.html');
             if (!existingDashboard) {
                 const dashboardLink = document.createElement('a');
@@ -378,21 +381,30 @@
                 <div class="empty-cart">
                     <i class="fas fa-shopping-cart"></i>
                     <p>${message}</p>
-                    <a href="index.html" class="btn-primary">Browse Products</a>
+                    <a href="http://localhost/php-ecommerce-demo/products.html" class="btn-primary">Browse Products</a>
                 </div>
             `;
         }
 
-        // Remove item from cart
+        // Remove item from cart (CSRF-protected)
         async function removeFromCart(cartId) {
             try {
-                const response = await fetch('api.php?action=cart', {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ cart_id: cartId })
-                });
+                const payload = { cart_id: cartId };
+                if (typeof securityManager !== 'undefined' && securityManager.getCSRFToken) {
+                    const token = securityManager.getCSRFToken();
+                    if (token) payload.csrf_token = token;
+                }
+
+                const response = (typeof securityManager !== 'undefined' && securityManager.secureFetch)
+                    ? await securityManager.secureFetch('api.php?action=cart', {
+                        method: 'DELETE',
+                        body: JSON.stringify(payload)
+                      })
+                    : await fetch('api.php?action=cart', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                      });
                 
                 const result = await response.json();
                 
@@ -409,46 +421,85 @@
 
         // Update item quantity
         async function updateQuantity(cartId, newQuantity) {
-            if (newQuantity <= 0) {
-                removeFromCart(cartId);
-                return;
-            }
-            
             try {
-                // This would require a new API endpoint to update quantity
-                // For now, we'll just remove and add again
                 const item = cart.find(i => i.id == cartId);
                 if (!item) return;
-                
-                await removeFromCart(cartId);
-                
-                const response = await fetch('api.php?action=cart', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        product_id: item.product_id,
-                        quantity: newQuantity
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    await loadCart();
-                } else {
-                    showAlert(result.error || 'Failed to update quantity', 'error');
+
+            const currentQty = parseInt(item.quantity);
+            const targetQty = parseInt(newQuantity);
+                if (targetQty <= 0) {
+                    // If target is zero or less, just remove the item
+                    await removeFromCart(cartId);
+                    return;
                 }
+
+                if (targetQty > currentQty) {
+                    // Increase by the difference using addToCart
+                    const diff = targetQty - currentQty;
+                    const response = (typeof securityManager !== 'undefined' && securityManager.secureFetch)
+                        ? await securityManager.secureFetch('api.php?action=cart', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                product_id: item.product_id,
+                                quantity: diff
+                            })
+                          })
+                        : await fetch('api.php?action=cart', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                product_id: item.product_id,
+                                quantity: diff
+                            })
+                          });
+
+                    const result = await response.json();
+                    if (!result.success) {
+                        showAlert(result.error || 'Failed to increase quantity', 'error');
+                        return;
+                    }
+                } else if (targetQty < currentQty) {
+                    // Decrease: simplest safe path is remove and re-add exact quantity
+                    await removeFromCart(cartId);
+
+                    const response = (typeof securityManager !== 'undefined' && securityManager.secureFetch)
+                        ? await securityManager.secureFetch('api.php?action=cart', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                product_id: item.product_id,
+                                quantity: targetQty
+                            })
+                          })
+                        : await fetch('api.php?action=cart', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                product_id: item.product_id,
+                                quantity: targetQty
+                            })
+                          });
+
+                    const result = await response.json();
+                    if (!result.success) {
+                        showAlert(result.error || 'Failed to decrease quantity', 'error');
+                        return;
+                    }
+                }
+
+                await loadCart();
             } catch (error) {
                 showAlert('Error updating quantity', 'error');
             }
         }
 
-        // Logout function
+        // Logout function (CSRF-protected)
         async function logout() {
             try {
-                await fetch('api.php?action=logout', { method: 'POST' });
+                if (typeof securityManager !== 'undefined' && securityManager.secureFetch) {
+                    await securityManager.secureFetch('api.php?action=logout', { method: 'POST' });
+                } else {
+                    await fetch('api.php?action=logout', { method: 'POST' });
+                }
                 currentUser = null;
                 cart = [];
                 showGuestSection();
@@ -471,5 +522,6 @@
             }, 5000);
         }
     </script>
+    <script src="security.js"></script>
 </body>
 </html>

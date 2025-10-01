@@ -333,16 +333,13 @@ function getCart() {
     global $pdo;
     
     try {
-        $stmt = $pdo->prepare("
-            SELECT c.id, c.quantity, p.name, p.price, p.image_url, (c.quantity * p.price) as total
-            FROM cart c 
-            JOIN products p ON c.product_id = p.id 
-            WHERE c.user_id = ?
-        ");
+        $stmt = $pdo->prepare("\n            SELECT c.id, c.product_id, c.quantity, p.name, p.price, p.image_url, (c.quantity * p.price) as total\n            FROM cart c \n            JOIN products p ON c.product_id = p.id \n            WHERE c.user_id = ?\n        ");
         $stmt->execute([$_SESSION['user_id']]);
         $cartItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        echo json_encode($cartItems);
+        echo json_encode(array_map(function ($item) {
+            return array_merge($item, ['product_id' => $item['product_id']]);
+        }, $cartItems));
     } catch (Exception $e) {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to fetch cart']);
