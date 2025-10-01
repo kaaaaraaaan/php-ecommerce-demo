@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadProducts();
     initializeStatsAnimation();
     initMobileNav();
+    initProductsPageFilters();
 });
 
 // Check if user is logged in
@@ -140,23 +141,89 @@ function filterByCategory(categoryId) {
 // Display products in grid
 function displayProducts() {
     const grid = document.getElementById('productsGrid');
+    if (!grid) return;
     grid.innerHTML = '';
-    
-    // Check if we're on the homepage by looking for the hero section
+
     const isHomepage = document.querySelector('.hero-section') !== null;
-    
-    // Limit to 6 products on homepage, show all on products page
-    const productsToShow = isHomepage ? products.slice(0, 6) : products;
-    
+
+    let list = [...products];
+    if (!isHomepage) {
+        list = applyProductsPageFilters(list);
+        list = applyProductsPageSorting(list);
+    }
+
+    const productsToShow = isHomepage ? list.slice(0, 6) : list;
+
     productsToShow.forEach(product => {
         const productCard = createProductCard(product);
         grid.appendChild(productCard);
     });
-    
-    // Add "View All Products" button on homepage if there are more than 6 products
+
     if (isHomepage && products.length > 6) {
         addViewAllProductsButton();
     }
+}
+
+// Apply search and max-price filters on the products page
+function applyProductsPageFilters(list) {
+    const searchEl = document.getElementById('searchInput');
+    const maxPriceEl = document.getElementById('maxPriceInput');
+
+    const term = (searchEl?.value || '').toLowerCase().trim();
+    const maxPrice = parseFloat(maxPriceEl?.value || '');
+
+    return list.filter(p => {
+        // price filter
+        if (!Number.isNaN(maxPrice) && parseFloat(p.price) > maxPrice) return false;
+
+        // search filter across name, description, category
+        if (term) {
+            const fields = [p.name || '', p.description || '', p.category_name || '']
+                .map(v => v.toLowerCase());
+            if (!fields.some(v => v.includes(term))) return false;
+        }
+        return true;
+    });
+}
+
+// Initialize listeners for products page filters
+function initProductsPageFilters() {
+    // Only relevant on products page where inputs exist
+    const searchEl = document.getElementById('searchInput');
+    const maxPriceEl = document.getElementById('maxPriceInput');
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    const sortEl = document.getElementById('sortSelect');
+
+    if (searchEl) {
+        searchEl.addEventListener('input', () => displayProducts());
+    }
+    if (maxPriceEl) {
+        maxPriceEl.addEventListener('input', () => displayProducts());
+    }
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (searchEl) searchEl.value = '';
+            if (maxPriceEl) maxPriceEl.value = '';
+            if (sortEl) sortEl.value = 'default';
+            displayProducts();
+        });
+    }
+    if (sortEl) {
+        sortEl.addEventListener('change', () => displayProducts());
+    }
+}
+
+// Sorting on products page by price
+function applyProductsPageSorting(list) {
+    const sortEl = document.getElementById('sortSelect');
+    const mode = sortEl ? sortEl.value : 'default';
+    if (mode === 'price-asc') {
+        return [...list].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+    }
+    if (mode === 'price-desc') {
+        return [...list].sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+    }
+    return list;
 }
 
 // Add "View All Products" button to homepage

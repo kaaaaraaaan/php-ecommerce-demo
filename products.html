@@ -358,437 +358,63 @@
         </div>
     </section>
 
-    <!-- Products Section -->
-    <section class="products-container">
-        <!-- Filters -->
-        <div class="products-filters">
-            <div class="filters-header">
-                <h2><i class="fas fa-filter"></i> Filter Products</h2>
-                <div class="products-count" id="productsCount">Loading products...</div>
+    <!-- Alerts for unified notifications -->
+    <div class="alert alert-success" id="successAlert"></div>
+    <div class="alert alert-error" id="errorAlert"></div>
+
+    <!-- Products Section (Unified design with homepage) -->
+    <section id="productsSection" class="products-section">
+        <div class="container">
+            <div class="section-header">
+                <h2><i class="fas fa-fire"></i> All Products</h2>
+                <p>Browse our complete collection of premium tech products</p>
             </div>
-            <div class="filter-row">
+
+            <!-- Category Filter (buttons) -->
+            <div class="category-filter">
+                <h3><i class="fas fa-filter"></i> Filter by Category</h3>
+                <div class="category-buttons" id="categoryButtons">
+                    <button class="category-btn active" data-category="all">
+                        <i class="fas fa-th"></i> All Products
+                    </button>
+                    <!-- Dynamic category buttons will be injected by script.js -->
+                </div>
+            </div>
+
+            <!-- Additional Filters (Search & Price) -->
+            <div class="filter-row" style="margin-top: 16px; display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
                 <div class="filter-group">
-                    <label for="categoryFilter">Category</label>
-                    <select id="categoryFilter" class="filter-select">
-                        <option value="">All Categories</option>
+                    <label for="searchInput">Search</label>
+                    <input type="text" id="searchInput" class="filter-input" placeholder="Search products...">
+                </div>
+                <div class="filter-group">
+                    <label for="maxPriceInput">Max Price</label>
+                    <input type="number" id="maxPriceInput" class="filter-input" placeholder="e.g. 999" min="0" step="0.01">
+                </div>
+                <div class="filter-group">
+                    <label for="sortSelect">Sort By</label>
+                    <select id="sortSelect" class="filter-select">
+                        <option value="default">Relevance</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label for="priceFilter">Max Price</label>
-                    <input type="number" id="priceFilter" class="filter-input" placeholder="Enter max price" min="0" step="0.01">
-                </div>
-                <div class="filter-group">
-                    <label for="searchFilter">Search</label>
-                    <input type="text" id="searchFilter" class="filter-input" placeholder="Search products...">
-                </div>
-                <div class="filter-group">
-                    <label>&nbsp;</label>
-                    <button class="clear-filters" onclick="clearFilters()">
-                        <i class="fas fa-times"></i> Clear Filters
-                    </button>
+                <div class="filter-group" style="align-self:flex-end;">
+                    <button id="clearFiltersBtn" class="clear-filters"><i class="fas fa-times"></i> Clear Filters</button>
                 </div>
             </div>
-        </div>
 
-        <!-- Loading Spinner -->
-        <div class="loading-spinner" id="loadingSpinner">
-            <div class="spinner"></div>
-            <p>Loading products...</p>
-        </div>
+            <!-- Loading state -->
+            <div id="loadingProducts" class="loading">Loading products...</div>
 
-        <!-- Products Grid -->
-        <div class="products-grid" id="productsGrid">
-            <!-- Products will be loaded here -->
-        </div>
-
-        <!-- No Products Message -->
-        <div class="no-products hidden" id="noProducts">
-            <i class="fas fa-box-open"></i>
-            <h3>No Products Found</h3>
-            <p>Try adjusting your filters or check back later for new products.</p>
+            <!-- Products Grid -->
+            <div class="products-grid" id="productsGrid"></div>
         </div>
     </section>
 
 
-    <script>
-        // ===== PRODUCT FILTERING SYSTEM - REDESIGNED =====
-        
-        // Global state
-        const ProductFilter = {
-            allProducts: [],
-            filteredProducts: [],
-            categories: [],
-            currentUser: null
-        };
-
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', initializeApp);
-
-        async function initializeApp() {
-            try {
-                showLoading(true);
-                await Promise.all([
-                    loadUserStatus(),
-                    loadCategories(),
-                    loadProducts()
-                ]);
-                setupEventListeners();
-                showLoading(false);
-            } catch (error) {
-                console.error('Failed to initialize app:', error);
-                showError('Failed to load the application. Please refresh the page.');
-                showLoading(false);
-            }
-        }
-
-        // ===== USER MANAGEMENT =====
-        async function loadUserStatus() {
-            try {
-                const response = await fetch('api.php?action=user');
-                if (response.ok) {
-                    const data = await response.json();
-                    ProductFilter.currentUser = data.logged_in ? data.user : null;
-                    updateUserInterface();
-                }
-            } catch (error) {
-                console.error('Error loading user status:', error);
-                ProductFilter.currentUser = null;
-                updateUserInterface();
-            }
-        }
-
-        function updateUserInterface() {
-            const userSection = document.getElementById('userSection');
-            const guestSection = document.getElementById('guestSection');
-            const welcomeText = document.getElementById('welcomeText');
-
-            if (ProductFilter.currentUser) {
-                if (userSection) userSection.classList.remove('hidden');
-                if (guestSection) guestSection.classList.add('hidden');
-                if (welcomeText) welcomeText.textContent = `Welcome, ${ProductFilter.currentUser.username}!`;
-                loadUserCart();
-            } else {
-                if (userSection) userSection.classList.add('hidden');
-                if (guestSection) guestSection.classList.remove('hidden');
-            }
-        }
-
-        async function loadUserCart() {
-            if (!ProductFilter.currentUser) return;
-            
-            try {
-                const response = await fetch('api.php?action=cart');
-                if (response.ok) {
-                    const cart = await response.json();
-                    updateCartDisplay(cart);
-                }
-            } catch (error) {
-                console.error('Error loading cart:', error);
-            }
-        }
-
-        function updateCartDisplay(cart) {
-            const cartCount = document.getElementById('cartCount');
-            if (!cartCount || !Array.isArray(cart)) return;
-
-            const totalItems = cart.reduce((sum, item) => sum + parseInt(item.quantity || 0), 0);
-            
-            if (totalItems > 0) {
-                cartCount.textContent = totalItems;
-                cartCount.classList.remove('hidden');
-            } else {
-                cartCount.classList.add('hidden');
-            }
-        }
-
-        // ===== CATEGORY MANAGEMENT =====
-        async function loadCategories() {
-            try {
-                const response = await fetch('api.php?action=categories');
-                if (!response.ok) throw new Error('Failed to fetch categories');
-                
-                ProductFilter.categories = await response.json();
-                populateCategoryFilter();
-            } catch (error) {
-                console.error('Error loading categories:', error);
-                ProductFilter.categories = [];
-            }
-        }
-
-        function populateCategoryFilter() {
-            const categorySelect = document.getElementById('categoryFilter');
-            if (!categorySelect) return;
-
-            categorySelect.innerHTML = '<option value="">All Categories</option>';
-            
-            ProductFilter.categories.forEach(category => {
-                const option = document.createElement('option');
-                option.value = category.id;
-                option.textContent = category.name;
-                categorySelect.appendChild(option);
-            });
-        }
-
-        // ===== PRODUCT MANAGEMENT =====
-        async function loadProducts() {
-            try {
-                const response = await fetch('api.php?action=products');
-                if (!response.ok) throw new Error('Failed to fetch products');
-                
-                ProductFilter.allProducts = await response.json();
-                ProductFilter.filteredProducts = [...ProductFilter.allProducts];
-                
-                renderProducts();
-                updateProductCount();
-            } catch (error) {
-                console.error('Error loading products:', error);
-                showError('Failed to load products. Please try again.');
-            }
-        }
-
-        function renderProducts() {
-            const grid = document.getElementById('productsGrid');
-            const noProductsMsg = document.getElementById('noProducts');
-            
-            if (!grid) return;
-
-            if (ProductFilter.filteredProducts.length === 0) {
-                grid.innerHTML = '';
-                if (noProductsMsg) noProductsMsg.classList.remove('hidden');
-                return;
-            }
-
-            if (noProductsMsg) noProductsMsg.classList.add('hidden');
-            
-            grid.innerHTML = '';
-            ProductFilter.filteredProducts.forEach(product => {
-                const card = createProductCard(product);
-                grid.appendChild(card);
-            });
-        }
-
-        function createProductCard(product) {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            
-            const price = parseFloat(product.price || 0).toFixed(2);
-            const stock = parseInt(product.stock_quantity || 0);
-            const stockStatus = getStockStatus(stock);
-            
-            card.innerHTML = `
-                <img src="${product.image_url || 'https://via.placeholder.com/280x200?text=No+Image'}" 
-                     alt="${product.name || 'Product'}" 
-                     class="product-image" 
-                     onerror="this.src='https://via.placeholder.com/280x200?text=No+Image'">
-                <div class="product-info">
-                    <div class="product-category">${product.category_name || 'Uncategorized'}</div>
-                    <h3 class="product-name">${product.name || 'Unnamed Product'}</h3>
-                    <p class="product-description">${product.description || 'No description available'}</p>
-                    <div class="product-footer">
-                        <div class="product-price">$${price}</div>
-                        <div class="product-stock ${stockStatus.class}">${stockStatus.text}</div>
-                    </div>
-                    <div class="product-actions">
-                        <button class="btn-view" onclick="viewProduct(${product.id})">
-                            <i class="fas fa-eye"></i> View Details
-                        </button>
-                        <button class="btn-cart" onclick="addToCart(${product.id})" ${stock <= 0 ? 'disabled' : ''}>
-                            <i class="fas fa-shopping-cart"></i> 
-                            ${stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            return card;
-        }
-
-        function getStockStatus(stock) {
-            if (stock <= 0) return { class: 'out-of-stock', text: 'Out of Stock' };
-            if (stock <= 5) return { class: 'low-stock', text: `Only ${stock} left` };
-            return { class: '', text: `${stock} in stock` };
-        }
-
-        // ===== FILTERING SYSTEM =====
-        function setupEventListeners() {
-            const categoryFilter = document.getElementById('categoryFilter');
-            const priceFilter = document.getElementById('priceFilter');
-            const searchFilter = document.getElementById('searchFilter');
-
-            if (categoryFilter) {
-                categoryFilter.addEventListener('change', applyFilters);
-            }
-            
-            if (priceFilter) {
-                priceFilter.addEventListener('input', debounce(applyFilters, 500));
-            }
-            
-            if (searchFilter) {
-                searchFilter.addEventListener('input', debounce(applyFilters, 300));
-            }
-        }
-
-        function applyFilters() {
-            const categoryId = document.getElementById('categoryFilter')?.value || '';
-            const maxPrice = document.getElementById('priceFilter')?.value || '';
-            const searchTerm = document.getElementById('searchFilter')?.value.toLowerCase().trim() || '';
-
-            ProductFilter.filteredProducts = ProductFilter.allProducts.filter(product => {
-                // Category filter
-                if (categoryId && product.category_id != categoryId) {
-                    return false;
-                }
-
-                // Price filter
-                if (maxPrice && parseFloat(product.price || 0) > parseFloat(maxPrice)) {
-                    return false;
-                }
-
-                // Search filter
-                if (searchTerm) {
-                    const searchFields = [
-                        product.name || '',
-                        product.description || '',
-                        product.category_name || ''
-                    ].map(field => field.toLowerCase());
-
-                    const matchFound = searchFields.some(field => field.includes(searchTerm));
-                    if (!matchFound) return false;
-                }
-
-                return true;
-            });
-
-            renderProducts();
-            updateProductCount();
-        }
-
-        function clearFilters() {
-            const categoryFilter = document.getElementById('categoryFilter');
-            const priceFilter = document.getElementById('priceFilter');
-            const searchFilter = document.getElementById('searchFilter');
-
-            if (categoryFilter) categoryFilter.value = '';
-            if (priceFilter) priceFilter.value = '';
-            if (searchFilter) searchFilter.value = '';
-
-            ProductFilter.filteredProducts = [...ProductFilter.allProducts];
-            renderProducts();
-            updateProductCount();
-        }
-
-        function updateProductCount() {
-            const countElement = document.getElementById('productsCount');
-            if (!countElement) return;
-
-            const filtered = ProductFilter.filteredProducts.length;
-            const total = ProductFilter.allProducts.length;
-
-            if (filtered === total) {
-                countElement.textContent = `Showing all ${total} products`;
-            } else {
-                countElement.textContent = `Showing ${filtered} of ${total} products`;
-            }
-        }
-
-        // ===== UTILITY FUNCTIONS =====
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-
-        function showLoading(show) {
-            const spinner = document.getElementById('loadingSpinner');
-            if (spinner) {
-                spinner.style.display = show ? 'block' : 'none';
-            }
-        }
-
-        function showError(message) {
-            alert(message);
-        }
-
-        function showSuccess(message) {
-            // Create a simple success notification
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #28a745;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 5px;
-                z-index: 1000;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => notification.remove(), 3000);
-        }
-
-        // ===== PRODUCT ACTIONS =====
-        function viewProduct(productId) {
-            window.location.href = `product.html?id=${productId}`;
-        }
-
-        async function addToCart(productId) {
-            if (!ProductFilter.currentUser) {
-                alert('Please login to add items to cart');
-                window.location.href = 'login.html';
-                return;
-            }
-
-            try {
-                const response = await fetch('api.php?action=cart', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        product_id: productId,
-                        quantity: 1
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showSuccess('Item added to cart!');
-                    loadUserCart();
-                } else {
-                    showError(result.error || 'Failed to add item to cart');
-                }
-            } catch (error) {
-                console.error('Error adding to cart:', error);
-                showError('Error adding item to cart');
-            }
-        }
-
-        async function logout() {
-            try {
-                await fetch('api.php?action=logout', { method: 'POST' });
-                window.location.href = 'index.html';
-            } catch (error) {
-                console.error('Logout error:', error);
-                window.location.href = 'index.html';
-            }
-        }
-
-        // Make functions globally available
-        window.clearFilters = clearFilters;
-        window.addToCart = addToCart;
-        window.logout = logout;
-        window.viewProduct = viewProduct;
-    </script>
+    <script src="security.js"></script>
+    <script src="script.js"></script>
 
     <!-- Footer -->
     <footer>
