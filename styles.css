@@ -26,7 +26,7 @@ body {
 }
 
 .nav {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -1130,6 +1130,43 @@ footer .copyright {
 
 .category-btn:hover i, .category-btn.active i {
     color: white;
+}
+
+/* View All Products Button */
+.view-all-container {
+    text-align: center;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+}
+
+.view-all-products-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.view-all-products-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+}
+
+.view-all-products-btn i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.view-all-products-btn:hover i {
+    transform: translateX(3px);
 }
 
 /* Statistics Section */

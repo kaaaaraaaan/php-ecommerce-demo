@@ -451,15 +451,15 @@
                             <div class="form-section">
                                 <h2><i class="fas fa-credit-card"></i> Payment Method</h2>
                                 <div class="payment-methods">
-                                    <div class="payment-method active" onclick="selectPaymentMethod(this, 'credit')">
+                                    <div class="payment-method active" data-method="credit" onclick="selectPaymentMethod(this, 'credit')">
                                         <i class="far fa-credit-card"></i>
                                         <div>Credit Card</div>
                                     </div>
-                                    <div class="payment-method" onclick="selectPaymentMethod(this, 'paypal')">
+                                    <div class="payment-method" data-method="paypal" onclick="selectPaymentMethod(this, 'paypal')">
                                         <i class="fab fa-paypal"></i>
                                         <div>PayPal</div>
                                     </div>
-                                    <div class="payment-method" onclick="selectPaymentMethod(this, 'bank')">
+                                    <div class="payment-method" data-method="bank" onclick="selectPaymentMethod(this, 'bank')">
                                         <i class="fas fa-university"></i>
                                         <div>Bank Transfer</div>
                                     </div>
@@ -591,14 +591,55 @@
                 showAlert('Your cart is empty', 'error');
                 return;
             }
-            
+
             try {
-                const response = await fetch('api.php?action=checkout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
+                // Collect form data
+                const formData = {
+                    firstName: document.getElementById('firstName').value,
+                    lastName: document.getElementById('lastName').value,
+                    address: document.getElementById('address').value,
+                    city: document.getElementById('city').value,
+                    postalCode: document.getElementById('postalCode').value,
+                    country: document.getElementById('country').value,
+                    paymentMethod: document.querySelector('.payment-method.active')?.dataset?.method || 'credit'
+                };
+
+                let response;
+                
+                // Try to use securityManager if available, otherwise use regular fetch
+                if (typeof securityManager !== 'undefined' && securityManager.secureFetch) {
+                    response = await securityManager.secureFetch('api.php?action=checkout', {
+                        method: 'POST',
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    // Fallback: Get CSRF token manually and add to headers
+                    let csrfToken = null;
+                    try {
+                        const tokenResponse = await fetch('api.php?action=get_csrf_token');
+                        if (tokenResponse.ok) {
+                            const tokenData = await tokenResponse.json();
+                            csrfToken = tokenData.csrf_token;
+                        }
+                    } catch (e) {
+                        console.warn('Could not fetch CSRF token:', e);
                     }
-                });
+
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    if (csrfToken) {
+                        headers['X-CSRF-Token'] = csrfToken;
+                        formData.csrf_token = csrfToken;
+                    }
+
+                    response = await fetch('api.php?action=checkout', {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify(formData)
+                    });
+                }
                 
                 const result = await response.json();
                 
@@ -613,6 +654,7 @@
                     showAlert(result.error || 'Checkout failed', 'error');
                 }
             } catch (error) {
+                console.error('Checkout error:', error);
                 showAlert('Error during checkout', 'error');
             }
         }
@@ -620,7 +662,11 @@
         // Logout function
         async function logout() {
             try {
-                await fetch('api.php?action=logout', { method: 'POST' });
+                if (typeof securityManager !== 'undefined' && securityManager.secureFetch) {
+                    await securityManager.secureFetch('api.php?action=logout', { method: 'POST' });
+                } else {
+                    await fetch('api.php?action=logout', { method: 'POST' });
+                }
                 currentUser = null;
                 cart = [];
                 showGuestSection();
@@ -643,5 +689,7 @@
             }, 5000);
         }
     </script>
+
+    <script src="security.js"></script>
 </body>
 </html>

@@ -142,10 +142,51 @@ function displayProducts() {
     const grid = document.getElementById('productsGrid');
     grid.innerHTML = '';
     
-    products.forEach(product => {
+    // Check if we're on the homepage by looking for the hero section
+    const isHomepage = document.querySelector('.hero-section') !== null;
+    
+    // Limit to 6 products on homepage, show all on products page
+    const productsToShow = isHomepage ? products.slice(0, 6) : products;
+    
+    productsToShow.forEach(product => {
         const productCard = createProductCard(product);
         grid.appendChild(productCard);
     });
+    
+    // Add "View All Products" button on homepage if there are more than 6 products
+    if (isHomepage && products.length > 6) {
+        addViewAllProductsButton();
+    }
+}
+
+// Add "View All Products" button to homepage
+function addViewAllProductsButton() {
+    const productsSection = document.getElementById('productsSection');
+    const container = productsSection.querySelector('.container');
+    
+    // Remove existing button if it exists
+    const existingButton = container.querySelector('.view-all-products-btn');
+    if (existingButton) {
+        existingButton.remove();
+    }
+    
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'view-all-container';
+    buttonContainer.style.textAlign = 'center';
+    buttonContainer.style.marginTop = '2rem';
+    
+    // Create the button
+    const viewAllBtn = document.createElement('a');
+    viewAllBtn.href = 'products.html';
+    viewAllBtn.className = 'view-all-products-btn btn-primary';
+    viewAllBtn.innerHTML = '<i class="fas fa-arrow-right"></i> View All Products';
+    viewAllBtn.style.display = 'inline-block';
+    viewAllBtn.style.padding = '12px 24px';
+    viewAllBtn.style.textDecoration = 'none';
+    
+    buttonContainer.appendChild(viewAllBtn);
+    container.appendChild(buttonContainer);
 }
 
 // Create product card element
